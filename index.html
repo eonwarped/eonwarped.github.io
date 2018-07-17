@@ -2,12 +2,7 @@
   <head><title>eonwarped</title>
     <script src="https://unpkg.com/dsteem@^0.9.0/dist/dsteem.js"></script>
 <script>
-    var client = new dsteem.Client('https://gtg.steem.house:8090')
-    client.database.getDiscussions('trending', {tag: 'writing', limit: 1}).then(function(discussions){
-        document.body.innerHTML += '<h1>' + discussions[0].title + '</h1>'
-        document.body.innerHTML += '<h2>by ' + discussions[0].author + '</h2>'
-        document.body.innerHTML += '<pre style="white-space: pre-wrap">' + discussions[0].body + '</pre>'
-    })
+    var client = new dsteem.Client('https://gtg.steem.house:8090');
 </script>
   </head>
   <body>
