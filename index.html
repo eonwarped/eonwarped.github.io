@@ -1,5 +1,62 @@
-<html>
-</script><head><title>Steemit Post Filtering</title>
+<html><head><title>Steemit Post Filtering</title>
+    <style>
+// from https://loading.io/css/
+lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+.lds-ellipsis div {
+  position: absolute;
+  top: 27px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #cef;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+.lds-ellipsis div:nth-child(1) {
+  left: 6px;
+  animation: lds-ellipsis1 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(2) {
+  left: 6px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(3) {
+  left: 26px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(4) {
+  left: 45px;
+  animation: lds-ellipsis3 0.6s infinite;
+}
+@keyframes lds-ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lds-ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+@keyframes lds-ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(19px, 0);
+  }
+}
+    </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://unpkg.com/dsteem@^0.9.0/dist/dsteem.js"></script>
 <script>
@@ -87,10 +144,15 @@
     }); 
   }
 
+  function updateCount() {
+      $('#counter').html(($('#data-table tr').length - 1) + ' posts');
+  }
+    
   function printPosts(posts, filterFn) {
     posts.filter(filterFn).forEach(post => {
       $('#data-table tr:last').after('<tr><td>' + post.timestamp + '</td><td>' + post.tags + '</td><td>' + '<a href="https://steemit.com/@' + post.author + '/' + post.permlink + '">' + post.title + '</a></td></tr>');
     });
+    updateCount();
   }
   
   function loadAll(account, start, filter) {
@@ -110,8 +172,10 @@
   </head>
   <body>
   <table id="data-table">
-    <tr><td>Time</td><td>Tags</td><td>Post</td></tr>
-  </table>
-  <div id="loading">Loading more...</div>
-  </body>
-</html>
+    <tbody><tr><td>Time</td><td>Tags</td><td>Post</td></tr>
+  </tbody></table>
+  <div id="counter"></div>    
+  <div id="loading" style="position: relative">
+      <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+  </div>
+</body></html>
