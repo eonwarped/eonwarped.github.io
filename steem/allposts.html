@@ -165,17 +165,30 @@ lds-ellipsis {
     });
   }
 
-  var urlParams = new URLSearchParams(window.location.search);
-  var tags = urlParams.get('tags');
-  loadAll(urlParams.get('account'), -1, elt => tags ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true);
+  $(function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var tags = urlParams.get('tags');
+    if (urlParams.has('account')) {
+      $('#params input[name="account"').val(urlParams.get('account'));
+      loadAll(urlParams.get('account'), -1, elt => tags ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true);
+    }
+    if (urlParams.has('tags')) {
+      $('#params input[name="tags"').val(urlParams.get('tags'));
+    }
+  });
 </script>
   </head>
   <body>
+  <form method="get" id="params">
+    Account: <input type="text" name="account" />
+    Tags: <input type="text" name="tags" />
+    <input type="submit" value="Fetch" />
+  </form>
   <table id="data-table">
     <tbody><tr><td>Time</td><td>Tags</td><td>Post</td></tr>
   </tbody></table>
   <div id="counter"></div>    
-  <div id="loading" style="position: relative">
+  <div id="loading" style="position: relative; display: none">
       <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
   </div>
 </body></html>
