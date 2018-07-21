@@ -148,19 +148,20 @@ lds-ellipsis {
       $('#counter').html(($('#data-table tr').length - 1) + ' posts');
   }
     
-  function printPosts(posts, filterFn) {
+  function printPosts(posts, filterFn, useMarkdownLink) {
     posts.filter(filterFn).forEach(post => {
-      $('#data-table tr:last').after('<tr><td>' + post.timestamp + '</td><td>' + post.tags + '</td><td>' + '<a href="https://steemit.com/@' + post.author + '/' + post.permlink + '">' + post.title + '</a></td></tr>');
+      const link = useMarkdownLink ? '[' + post.title + '](https://steemit.com/@' + post.author + '/' + post.permlink + ')' : '<a href="https://steemit.com/@' + post.author + '/' + post.permlink + '">' + post.title + '</a>';
+      $('#data-table tr:last').after('<tr><td>' + post.timestamp + '</td><td>' + post.tags + '</td><td>' + link + '</td></tr>');
     });
     updateCount();
   }
   
-  function loadAll(account, start, filter) {
+  function loadAll(account, start, filter, useMarkdownLink) {
     loadPosts(account, start, (posts, last_trans) => {
-      printPosts(posts, filter);
+      printPosts(posts, filter, useMarkdownLink);
       $('#loading').toggle(false);
       if (last_trans > 0 && last_trans != start) {
-        loadAll(account, last_trans, filter);
+        loadAll(account, last_trans, filter, useMarkdownLink);
       }
     });
   }
@@ -170,20 +171,27 @@ lds-ellipsis {
     var tags = urlParams.get('tags');
     if (urlParams.has('account')) {
       $('#params input[name="account"').val(urlParams.get('account'));
-      loadAll(urlParams.get('account'), -1, elt => tags ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true);
+      loadAll(urlParams.get('account'), -1, elt => tags ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true, urlParams.get('markdownLink'));
     }
     if (urlParams.has('tags')) {
       $('#params input[name="tags"').val(urlParams.get('tags'));
+    }
+    if (urlParams.has('markdownLink')) {
+      $('#params input[name="markdownLink"').prop("checked", urlParams.get('markdownLink'));
     }
   });
 </script>
   </head>
   <body>
   <form method="get" id="params">
-    Account: <input type="text" name="account" />
-    Tags: <input type="text" name="tags" />
+    <table><tbody>
+      <tr><td>Account: </td><td><input type="text" name="account" /></td></tr>
+      <tr><td>Tags: </td><td><input type="text" name="tags" /></td></tr>
+      <tr><td>Use Markdown Link: </td><td><input type="checkbox" name="markdownLink" /></td></tr>
+    </tbody></table>
     <input type="submit" value="Fetch" />
   </form>
+  <hr />
   <table id="data-table">
     <tbody><tr><td>Time</td><td>Tags</td><td>Post</td></tr>
   </tbody></table>
