@@ -169,6 +169,9 @@ lds-ellipsis {
   $(function() {
     var urlParams = new URLSearchParams(window.location.search);
     var tags = urlParams.get('tags');
+    if (urlParams.has('server')) {
+      client = new dsteem.Client(urlParams.get('server'));
+    }
     if (urlParams.has('account')) {
       $('#params input[name="account"').val(urlParams.get('account'));
       loadAll(urlParams.get('account'), -1, elt => tags ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true, urlParams.get('markdownLink'));
