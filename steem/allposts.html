@@ -60,7 +60,7 @@ lds-ellipsis {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://unpkg.com/dsteem@^0.9.0/dist/dsteem.js"></script>
 <script>
-  var client = new dsteem.Client('https://gtg.steem.house:8090')
+  var client = new dsteem.Client('https://api.steemit.com')
 
   function loadPosts(account, start, callback) {
     return getPosts(account, start, [], new Set(), callback);
