@@ -167,20 +167,27 @@ lds-ellipsis {
   }
 
   $(function() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var tags = urlParams.get('tags');
-    if (urlParams.has('server')) {
-      client = new dsteem.Client(urlParams.get('server'));
+    //https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/21152762#21152762
+    var qd = {};
+    if (location.search)
+      location.search.substr(1).split("&").forEach(function(item) {
+        var s = item.split("="),
+          k = s[0],
+          v = s[1] && decodeURIComponent(s[1]); //  null-coalescing / short-circuit
+       //(k in qd) ? qd[k].push(v) : qd[k] = [v]
+       (qd[k] = qd[k] || []).push(v) // null-coalescing / short-circuit
+    })
+    var tags = qd.tags && qd.tags[0] != "" ? qd.tags[0].split(",") : [];
+    if (qd.account && qd.account[0] != "") {
+      const account = qd.account[0];
+      $('#params input[name="account"').val(account);
+      loadAll(account, -1, elt => tags.length > 0 ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true, qd.markdownLink && qd.markdownLink[0] != "");
     }
-    if (urlParams.has('account')) {
-      $('#params input[name="account"').val(urlParams.get('account'));
-      loadAll(urlParams.get('account'), -1, elt => tags ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true, urlParams.get('markdownLink'));
+    if (tags.length > 0) {
+      $('#params input[name="tags"').val(tags);
     }
-    if (urlParams.has('tags')) {
-      $('#params input[name="tags"').val(urlParams.get('tags'));
-    }
-    if (urlParams.has('markdownLink')) {
-      $('#params input[name="markdownLink"').prop("checked", urlParams.get('markdownLink'));
+    if (qd.markdownLink && qd.markdownLink[0] != "") {
+      $('#params input[name="markdownLink"').prop("checked", qd.markdownLink[0]);
     }
   });
 </script>
