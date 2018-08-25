@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="EN">
+<head>
+<title>Steem Now</title>
+<meta name="description" content="Your personal Steem Dashboard to keep track of your latest Steem statistics.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<link id="themecss" rel="stylesheet" type="text/css" href="style_light.css?v=1101">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="timeago.min.js"></script>
+<script src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
+<script src="steemnow.180813.min.js"></script>
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+<div id="mainwrapper">
+
+<div style="font-size:12px;margin-bottom:15px;text-align:center;color:red">* <a id="penguinpablo_latestpost" href="https://steemit.com/@penguinpablo" target="_blank">...</a> * <span style="float:right"><a href="#" id="link_price">$<span id="steem_price_sbd">0.00</span></a></span></div>
+
+<section class="box_small">
+<div class="header">@<span id="username"></span> - <span id="reputation"></span></div>
+<table style="width:100%;height:95%;padding:16px;"><tr>
+<td><span id="balance">0.000 STEEM</span><br>$<span id="sbd_balance">0 SDB</span><br><br><span><B><span id="vesting_shares">0.000 SP</span></B></span></td>
+<td style="text-align:center;width:40%">
+Your <span id="vote_weight">100</span>% upvote is worth:<br><input style="width:120px" id="range_vote_weight" type="range" min="1" max="100" step="1" value="100"><br><a href="#" onClick="var left=(screen.width/2)-300;var top=(screen.height/2)-200;window.open('upvotecalc.html','_blank','width=600,height=370,top='+top+',left='+left+',status=no,toolbar=no,menubar=no,resizable=yes,location=no');return false;"><img style="float:left" src="pics/calculator.png" width="16" height="16" alt="Calculator" title="Upvote Calculator"></a><b>$<span id="vote_value">0.00</span></b></td>
+</tr></table>
+</section>
+
+<section class="box_small">
+<div class="header">Daily rewards</div>
+<table style="width:100%;padding:16px">
+<tr><td>Curation today &nbsp;<a id="chartIcon" href="#"><img src="pics/chart.png" width="16" height="16" alt="Chart" title="Show chart"></a></td><td><span id="rewards_curation_today">0.000</span> SP</td></tr>
+<tr><td>Author today</td><td><span id="rewards_author_today">0.000</span> SP</td></tr>
+<tr><td>Curation yesterday</td><td><span id="rewards_curation_yesterday">0.000</span> SP</td></tr>
+<tr><td>Author yesterday</td><td><span id="rewards_author_yesterday">0.000</span> SP</td></tr>
+</table>
+</section>
+
+<section class="box_small" style="margin-right:0">
+<div class="header">Settings</div>
+<form id="form_settings" method="get" style="width:100%;padding:16px;line-height:21px">
+<label for="frm_username"><span>Username</span><div id="atsymbol">@</div> <input name="frm_username" size="18" value="eonwarped"></label><br>
+<label for="frm_node"><span>Node</span><select name="frm_node"><option value="api.steemit.com">api.steemit.com</option><option value="rpc.buildteam.io">rpc.buildteam.io</option><option value="steemd.minnowsupportproject.org">minnowsupportproject.org</option><option value="steemd.privex.io">steemd.privex.io</option><option value="rpc.steemliberator.com">rpc.steemliberator.com</option><option value="rpc2.steemviz.com">rpc2.steemviz.com</option><option value="gtg.steem.house:8090">gtg.steem.house</option></select></label> <a style="font-size:13px" href="#" onClick="alert('Select another API node if you are having connection issues.');return false;">?</a><br>
+<label for="frm_theme"><span>Theme</span><select name="frm_theme"><option value="light">Light</option><option value="dark">Dark</option></select></label><br>
+<label style="float:right;margin-right:28px;display:block"><span>&nbsp;</span><input type="submit" value="Save"></label>
+</form>
+</section>
+
+
+<div style="clear:both"></div>
+
+
+<div class="votingpowerback" style="margin-bottom:15px"><div class="votingpower" id="myvotingpower">voting power: 100%</div></div>
+
+<div id="chartRewardsContainer">
+<div style="position:absolute;top:8px;width:100%;text-align:right"><a id="closeChart" href="#"><img src="pics/close.png" width="16" height="16" alt="Close" title="Close chart"></a></div>
+<canvas id="chartRewards" style="width:100%;height:100%"></canvas>
+</div>
+
+<section class="box">
+<div class="header"><span>Latest upvotes<a href="#latestvotes" class="seen" title="Seen"><img alt="Seen" width="16" height="16" src="pics/seen.png"></a></span></div>
+<ul class="listitems" id="latestvotes">
+ <li>Loading...</li>
+</ul>
+</section>
+
+<section class="box">
+<div class="header"><span>Latest curation rewards<a href="#latestcurrewards" class="seen" title="Seen"><img alt="Seen" width="16" height="16" src="pics/seen.png"></a></span></div>
+<ul class="listitems" id="latestcurrewards">
+</ul>
+</section>
+
+<section class="box">
+<div class="header"><span>Latest author rewards<a href="#latestauthrewards" class="seen" title="Seen"><img alt="Seen" width="16" height="16" src="pics/seen.png"></a></span></div>
+<ul class="listitems" id="latestauthrewards">
+</ul>
+</section>
+
+<section class="box">
+<div class="header"><span>Latest posts</span></div>
+<form id="form_filter" method="post" style="text-align:center;margin:auto;padding:4px 4px 0 4px;font-size:12px">
+<select name="frm_filter_section" class="filterfield"><option value="blog">My posts</option><option value="comments">My comments</option><option value="feed">My feed</option><option value="created">New</option><option value="hot">Hot</option><option value="trending">Trending</option><option value="userblog">Blog</option></select>
+<span id="filterfields12">
+Reputation &gt; <input class="filterfield" style="width:20px" name="frm_filter_minrep" maxlength="2" value="25">
+Payout <select name="frm_filter_payoutlg"><option value='gt'>&gt;</option><option value='lt'>&lt;</option></select> <input style="width:34px" class="filterfield" name="frm_filter_payout" maxlength="5" value="0.00">
+</span><span id="filterfields34" style="display:none">
+@<input class="filterfield" style="width:90px" name="frm_filter_username" maxlength="25" value="">
+Tag: <input class="filterfield" style="width:80px" name="frm_filter_tag" maxlength="25" value="">
+</span>
+<a id="form_filter_refresh" href="#"><img src="pics/refresh.png" width="16" height="16" alt="Refresh" title="Refresh"></a></form>
+<ul class="listitems" id="latestposts">
+ <li>Loading...</li>
+</ul>
+</section>
+
+</div>
+
+<section id="footer">&copy; SteemNow.com by <a href="https://steemit.com/@penguinpablo" target="_blank">@penguinpablo</a> - <a href="https://www.coinmarkets.today" target="_blank">CoinMarkets.today</a></section>
+
+<div id="accountinfo"><div class="header"></div><span></span></div>
+
+</body></html>
