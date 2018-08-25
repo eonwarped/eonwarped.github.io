@@ -167,7 +167,7 @@ lds-ellipsis {
       $('#loading').toggle(false);
       if (last_trans > 0 && last_trans != start) {
         loadAll(account, last_trans, filter, useMarkdownLink);
-      } else {
+      } else if (last_trans == 0) {
         $('#download').toggle(true);
       }
     });
@@ -179,8 +179,11 @@ lds-ellipsis {
     }
     const zip = new JSZip();
     const promises = posts.map(post => {
-      return client.database.getDiscussions('blog', {tag: post.author, limit: 1, start_author: post.author, start_permlink: post.permlink}).then((result) => {
-        zip.file(`${post.permlink}.txt`, result[0].body);
+      return client.database.call('get_content', [post.author, post.permlink]).then(result => {        
+        zip.file(`${post.permlink}.txt`, result.body);
+      }, error => {
+        console.log(`Error fetching ${post.permlink}. Normal if post was deleted.`);
+        console.log(error);
       });
     });
       
