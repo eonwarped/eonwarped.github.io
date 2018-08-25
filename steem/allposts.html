@@ -59,8 +59,11 @@ lds-ellipsis {
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://unpkg.com/dsteem@^0.9.0/dist/dsteem.js"></script>
+<script src="dist/jszip.js"></script>
+<script async="" src="https://cdn.rawgit.com/eligrey/FileSaver.js/e9d941381475b5df8b7d7691013401e171014e89/FileSaver.min.js"></script>
 <script>
-  var client = new dsteem.Client('https://api.steemit.com')
+  var client = new dsteem.Client('https://api.steemit.com');
+  var allPosts = [];
 
   function loadPosts(account, start, callback) {
     return getPosts(account, start, [], new Set(), callback);
@@ -149,7 +152,9 @@ lds-ellipsis {
   }
     
   function printPosts(posts, filterFn, useMarkdownLink) {
-    posts.filter(filterFn).forEach(post => {
+    const filteredPosts = posts.filter(filterFn);
+    allPosts.push.apply(allPosts, filteredPosts);
+    filteredPosts.forEach(post => {
       const link = useMarkdownLink ? '[' + post.title + '](https://steemit.com/@' + post.author + '/' + post.permlink + ')' : '<a href="https://steemit.com/@' + post.author + '/' + post.permlink + '">' + post.title + '</a>';
       $('#data-table tr:last').after('<tr><td>' + post.timestamp + '</td><td>' + post.tags + '</td><td>' + link + '</td></tr>');
     });
@@ -162,7 +167,30 @@ lds-ellipsis {
       $('#loading').toggle(false);
       if (last_trans > 0 && last_trans != start) {
         loadAll(account, last_trans, filter, useMarkdownLink);
+      } else {
+        $('#download').toggle(true);
       }
+    });
+  }
+
+  function downloadZip(posts) {
+    if (!posts || posts.length == 0) {
+      return;
+    }
+    const zip = new JSZip();
+    const promises = posts.map(post => {
+      return client.database.getDiscussions('blog', {tag: post.author, limit: 1, start_author: post.author, start_permlink: post.permlink}).then((result) => {
+        zip.file(`${post.permlink}.txt`, result[0].body);
+      });
+    });
+      
+    const author = posts[0].author;
+    
+    Promise.all(promises).then(results => {
+      zip.generateAsync({type:"blob"})
+        .then(function (blob) {
+          saveAs(blob, `${author}.zip`);
+      });
     });
   }
 
@@ -205,8 +233,11 @@ lds-ellipsis {
   <table id="data-table">
     <tbody><tr><td>Time</td><td>Tags</td><td>Post</td></tr>
   </tbody></table>
-  <div id="counter"></div>    
+  <div id="counter"></div>
   <div id="loading" style="position: relative; display: none">
       <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
   </div>
+    <div id="download" style="position: relative; display: none">
+      <input type='button' onClick='downloadZip(allPosts);' value='Download' />
+    </div>    
 </body></html>
