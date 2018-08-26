@@ -65,18 +65,18 @@ lds-ellipsis {
   var client = new dsteem.Client('https://api.steemit.com');
   var allPosts = [];
 
-  function loadPosts(account, start, callback) {
-    return getPosts(account, start, [], new Set(), callback);
+  function loadPosts(account, start, showPayout, callback) {
+    return getPosts(account, start, [], new Set(), showPayout, callback);
   }
 
-  function getPosts(account, start, posts, visitedPermlinks, callback) {
+  function getPosts(account, start, posts, visitedPermlinks, showPayout, callback) {
     let last_trans = start;
   
     console.log(`Fetching account history for ${account} at ${start}`);
     $('#loading').toggle(true);
     client.database.call('get_account_history', [account, start, (start < 0) ? 10000 : Math.min(start, 10000)]).then((result) => {
       let hasError = false;
-    
+      const postFetchPromises = [];
       if (!hasError) {
         result.reverse();
 
@@ -92,13 +92,25 @@ lds-ellipsis {
 
                 const jsonMetadata = JSON.parse(post.json_metadata);
 
-                posts.push({
+                const postData = {
                   author: account,
                   timestamp: trans[1].timestamp,
                   title: post.title,
                   permlink: post.permlink,
                   tags: jsonMetadata.tags,
-                });
+                };
+
+if (showPayout) {                
+postFetchPromises.push(client.database.call('get_content', [post.author, post.permlink]).then(result => {
+          postData.pending_payout = result.pending_payout_value;
+          postData.author_payout = result.total_payout_value;
+          postData.curator_payout = result.curator_payout_value;
+      }, error => {
+        console.log(`Error fetching ${post.permlink}. Normal if post was deleted.`);
+        console.log(error);
+      }));
+}
+                posts.push(postData);
               }
             }
           }
@@ -125,7 +137,9 @@ lds-ellipsis {
           tags: '',
         });
       }
-      callback(posts, last_trans);
+      Promise.all(postFetchPromises).then(result => {
+        callback(posts, last_trans);
+      });
     }, (err) => {
       let hasError = false;
       if (err) {
@@ -151,22 +165,22 @@ lds-ellipsis {
       $('#counter').html(($('#data-table tr').length - 1) + ' posts');
   }
     
-  function printPosts(posts, filterFn, useMarkdownLink) {
+  function printPosts(posts, filterFn, useMarkdownLink, showPayout) {
     const filteredPosts = posts.filter(filterFn);
     allPosts.push.apply(allPosts, filteredPosts);
     filteredPosts.forEach(post => {
       const link = useMarkdownLink ? '[' + post.title + '](https://steemit.com/@' + post.author + '/' + post.permlink + ')' : '<a href="https://steemit.com/@' + post.author + '/' + post.permlink + '">' + post.title + '</a>';
-      $('#data-table tr:last').after('<tr><td>' + post.timestamp + '</td><td>' + post.tags + '</td><td>' + link + '</td></tr>');
+      $('#data-table tr:last').after('<tr><td>' + post.timestamp + '</td><td>' + post.tags + '</td><td>' + link + '</td><td>' + (showPayout ? (post.pending_payout + '</td><td>' + post.author_payout + '</td><td>' + post.curator_payout + '</td>') : '</td>') + '</tr>');
     });
     updateCount();
   }
   
-  function loadAll(account, start, filter, useMarkdownLink) {
-    loadPosts(account, start, (posts, last_trans) => {
-      printPosts(posts, filter, useMarkdownLink);
+  function loadAll(account, start, filter, useMarkdownLink, showPayout) {
+    loadPosts(account, start, showPayout, (posts, last_trans) => {
+      printPosts(posts, filter, useMarkdownLink, showPayout);
       $('#loading').toggle(false);
       if (last_trans > 0 && last_trans != start) {
-        loadAll(account, last_trans, filter, useMarkdownLink);
+        loadAll(account, last_trans, filter, useMarkdownLink, showPayout);
       } else if (last_trans == 0) {
         $('#download').toggle(true);
       }
@@ -212,13 +226,17 @@ lds-ellipsis {
     if (qd.account && qd.account[0] != "") {
       const account = qd.account[0];
       $('#params input[name="account"').val(account);
-      loadAll(account, -1, elt => tags.length > 0 ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true, qd.markdownLink && qd.markdownLink[0] != "");
+      loadAll(account, -1, elt => tags.length > 0 ? elt.tags && elt.tags.filter(t => tags.includes(t)).length > 0 : true, qd.markdownLink && qd.markdownLink[0] != "",
+qd.showPayout && qd.showPayout[0] != "");
     }
     if (tags.length > 0) {
       $('#params input[name="tags"').val(tags);
     }
     if (qd.markdownLink && qd.markdownLink[0] != "") {
       $('#params input[name="markdownLink"').prop("checked", qd.markdownLink[0]);
+    }
+    if (qd.showPayout && qd.showPayout[0] != "") {
+      $('#params input[name="showPayout"').prop("checked", qd.showPayout[0]);
     }
   });
 </script>
@@ -230,12 +248,13 @@ lds-ellipsis {
       <tr><td>Account: </td><td><input type="text" name="account" /></td></tr>
       <tr><td>Tags: </td><td><input type="text" name="tags" /></td></tr>
       <tr><td>Use Markdown Link: </td><td><input type="checkbox" name="markdownLink" /></td></tr>
+      <tr><td>Show Payout: </td><td><input type="checkbox" name="showPayout" /></td></tr>
     </tbody></table>
     <input type="submit" value="Fetch" />
   </form>
   <hr />
   <table id="data-table">
-    <tbody><tr><td>Time</td><td>Tags</td><td>Post</td></tr>
+    <tbody><tr><td>Time</td><td>Tags</td><td>Post</td><td>Pending Payout</td><td>Author Payout</td><td>Curator Payout</td></tr>
   </tbody></table>
   <div id="counter"></div>
   <div id="loading" style="position: relative; display: none">
