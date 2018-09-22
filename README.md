@@ -12,3 +12,5 @@ This tool allows fetching of all your steem posts in one convenient location.
 * Can filter by tags (it's an OR between comma separated tags)
 * Can download the content into a zip file (should work in modern browsers)
 * Can show pending post payout values and historical payouts.
+
+Now moved to https://github.com/helpienaut/helpienaut.github.io/blob/master/steem/allposts.html
