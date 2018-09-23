@@ -58,11 +58,11 @@ lds-ellipsis {
 }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-    <script src="https://unpkg.com/dsteem@latest/dist/dsteem.js"></script>
+    <script src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
 <script src="dist/jszip.min.js"></script>
 <script async="" src="https://cdn.rawgit.com/eligrey/FileSaver.js/e9d941381475b5df8b7d7691013401e171014e89/FileSaver.min.js"></script>
 <script>
-  var client = new dsteem.Client('https://api.steemit.com');
+  
   var allPosts = [];
 
   function loadPosts(account, start, showPayout, callback) {
@@ -74,8 +74,13 @@ lds-ellipsis {
   
     console.log(`Fetching account history for ${account} at ${start}`);
     $('#loading').toggle(true);
-    client.database.call('get_account_history', [account, start, (start < 0) ? 10000 : Math.min(start, 10000)]).then((result) => {
+    steem.api.getAccountHistory(account, start, (start < 0) ? 10000 : Math.min(start, 10000), (err, result) => {
       let hasError = false;
+      if (err) {
+        console.log('error');
+        console.log(err);
+        hasError = true;
+      }  
       const postFetchPromises = [];
       if (!hasError) {
         result.reverse();
@@ -140,24 +145,6 @@ postFetchPromises.push(client.database.call('get_content', [post.author, post.pe
       Promise.all(postFetchPromises).then(result => {
         callback(posts, last_trans);
       });
-    }, (err) => {
-      let hasError = false;
-      if (err) {
-        console.log('error');
-        console.log(err);
-        hasError = true;
-      }
-      if (hasError) {
-        // add indication that loading failed
-        posts.unshift({
-          author: account,
-          timestamp: 'Error while loading',
-          title: '',
-          permlink: '',
-          tags: '',
-        });
-      }
-      callback(posts);
     }); 
   }
 
