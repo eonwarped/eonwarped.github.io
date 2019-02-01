@@ -48,7 +48,7 @@
     <input type="text" placeholder="to" id="transfer_to" />
     <input type="text" placeholder="memo" id="transfer_memo" />
     <input type="number" placeholder="0.000" id="transfer_val" />
-    <input type="checkbox" id="transfer_enforce"/><label for="transfer_enforce">Enforce username</label>
+    <input type="checkbox" id="transfer_enforce" /><label for="transfer_enforce">Enforce username</label>
     <select id="transfer_currency">
       <option>STEEM</option>
       <option>SBD</option>
@@ -63,6 +63,25 @@
       <option>Active</option>
     </select>
     <button id="send_signature">Send</button>
+    <h3>Add Account Authority</h3>
+    <input type="text" placeholder="username" id="addauth_username" />
+    <input type="text" placeholder="authorized_username" id="addauth_authorized_username" />
+    <select id="addauth_role">
+      <option>Memo</option>
+      <option>Posting</option>
+      <option>Active</option>
+    </select>
+    <input type="number" placeholder="1" id="addauth_weight" />
+    <button id="send_addauth">Send</button>
+    <h3>Remove Account Authority</h3>
+    <input type="text" placeholder="username" id="removeauth_username" />
+    <input type="text" placeholder="authorized_username" id="removeauth_authorized_username" />
+    <select id="removeauth_role">
+      <option>Memo</option>
+      <option>Posting</option>
+      <option>Active</option>
+    </select>
+    <button id="send_removeauth">Send</button>
     <h3>Broadcast</h3>
     <input type="text" placeholder="username" id="broadcast_username" />
     <input type="text" placeholder="operations" id="broadcast_operations" />
@@ -92,8 +111,19 @@
       <option>VESTS</option>
     </select>
     <button id="send_delegation">Send</button>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <h3>Send Tokens</h3>
+    <input type="text" placeholder="username" id="tokens_username" />
+    <input type="text" placeholder="to" id="tokens_to" />
+    <input type="number" placeholder="1.000" id="tokens_qt" />
+    <input type="text" placeholder="tokens" id="tokens_unit" />
+    <input type="text" placeholder="memo" id="tokens_memo" />
+    <button id="sendTokens">Send</button>
+    <h3>Witness</h3>
+    <input type="text" placeholder="username" id="witness_username" />
+    <input type="text" placeholder="username" id="witness" />
+    <input type="checkbox" id="vote_wit" /><label for="vote_wit">Vote for this witness</label>
+    <button id="send_witness_vote">Send</button>
+    <script src="jquery.js"></script>
     <script src="main.js?v=a"></script>
 </body>
 
