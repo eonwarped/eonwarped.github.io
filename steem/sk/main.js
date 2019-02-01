@@ -79,7 +79,7 @@ $("#send_addauth").click(function() {
 });
 
 $("#send_removeauth").click(function() {
-    steem_keychain.requestAddAccountAuthority($("#removeauth_username").val(), $("#removeauth_authorized_username").val(), $("#removeauth_role option:selected").text(), function(response) {
+    steem_keychain.requestRemoveAccountAuthority($("#removeauth_username").val(), $("#removeauth_authorized_username").val(), $("#removeauth_role option:selected").text(), function(response) {
         console.log('main js response - remove auth');
         console.log(response);
     });
