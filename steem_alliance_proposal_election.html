@@ -1,0 +1,114 @@
+<html>
+<head>
+    <title>Steem Alliance Structure Proposal Vote Results</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
+</head>
+<body>
+<script>
+
+    const votes = {
+        22147: {
+            name: '“Decentralized Steem Incubator” Submitted By @alexvan',
+            voters: []  
+        },
+        22148: {
+            name: '“DeCentraSteem” Submitted By @impactn',
+            voters: []  
+        },
+        22149: {
+            name: '“Foundation Structure Proposal” Submitted By @upheaver',
+            voters: []  
+        },
+        22150: {
+            name: '“The Merger” Submitted By @shadowspub',
+            voters: []  
+        },
+        22151: {
+            name: '“People Survive By Supporting Each Other” Submitted by @thehive',
+            voters: []  
+        }, 
+    };
+    
+    function computeWeight(vests) {
+        const vestsFloat = parseFloat(vests);
+        return vestsFloat <= 500000000 ? vestsFloat
+            : 500000000 * (Math.log10(vestsFloat)-Math.log10(500000000)+1);
+    }
+    
+    
+    const dpollFetch = new Promise(function(resolve, reject) {
+        $.get("https://dpoll.xyz/api/v1/questions/steemalliance/?permlink=steem-alliance-structure-proposal-election", function(data) {
+console.log(data);
+    data.choices.forEach( (c) => {
+        Array.prototype.push.apply(votes[c.id].voters, c.voted_users.map((u) => u.username));
+    });
+    resolve();
+});
+    });
+    
+    const commentMap = {};/*
+        22147: 're-pibara-re-steemalliance-steem-alliance-structure-proposal-election-20190412t103225094z',
+        22148: 're-pibara-re-steemalliance-steem-alliance-structure-proposal-election-20190412t103225094z',
+        22149: 're-pibara-re-steemalliance-steem-alliance-structure-proposal-election-20190412t103225094z',
+        22150: 're-pibara-re-steemalliance-steem-alliance-structure-proposal-election-20190412t103225094z',
+        22151: 're-pibara-re-steemalliance-steem-alliance-structure-proposal-election-20190412t103225094z',
+    };*/
+    
+    const commentFetches = Object.entries(commentMap).map(entry => {
+      const id = entry[0];
+      const permlink = entry[1];
+      return new Promise(function(resolve, reject) {
+        steem.api.getContent('pibara', permlink, function(err, result) {
+          if (!err) {    
+            Array.prototype.push.apply(votes[id].voters, result.active_votes.map(v => v.voter));
+            resolve();
+          } else {
+            reject(err);
+          }
+        });
+      });
+    });
+        
+    Promise.all([dpollFetch].concat(commentFetches)).then(() => {
+        Promise.all(Object.entries(votes).map((entry) => {
+          return new Promise(function(resolve, reject) {
+            console.log(entry);
+            const id = entry[0];
+            const name = entry[1].name;
+            const voters = Array.from(new Set(entry[1].voters));
+            let totalWeight = 0;
+            steem.api.getAccounts(voters, (err, accounts) => {
+              if (!err) {
+                document.write("<h2>" + name + "</h2> Voters: <br>\n");
+                accounts.forEach((acc) => {
+                  const weight = computeWeight(acc.vesting_shares);
+                  totalWeight += weight;
+                  document.write(acc.name + ", " + weight + "<br>\n");
+                });
+                resolve();
+              } else {
+                  reject(err);
+              }
+              votes[id].totalWeight = totalWeight;
+            });
+          });
+        })).then(() => {
+            document.write('<h1>Summary</h1>');
+            const grandTotalWeight = Object.values(votes).map( v => v.totalWeight ).reduce((x,y) => x+y);
+            
+            
+            document.write('<table class="table table-striped"><tbody><tr><td>Name</td><td>Votes</td><td>Weight</td><td>% Weight</td></tr>');
+            Object.entries(votes).sort((a,b) => a[1].totalWeight > b[1].totalWeight).forEach((entry) => {
+                const name = entry[1].name;
+                const numVotes = entry[1].voters.length;
+                const totalWeight = entry[1].totalWeight;
+                const percent = totalWeight / grandTotalWeight * 100;
+                document.write('<tr><td>' + name + '</td><td>' + numVotes + '</td><td>' + totalWeight + '</td><td>' + percent.toFixed(2) + "%</td></tr>");
+            });
+            document.write('</tbody></table>');
+        }); 
+    });
+</script>
+</body>
+</html>
