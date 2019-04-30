@@ -65,7 +65,7 @@ $("#send_delegation").click(function() {
 });
 
 $("#send_signature").click(function() {
-    steem_keychain.requestSignBuffer($("#sign_username").val(), $("#sign_message").val(), $("#sign_method option:selected").text(), function(response) {
+    steem_keychain.requestSignBuffer($("#sign_username").val(), $("#sign_message").val(), $("#sign_method option:selected").text(), $("#sign_enforce").is(":checked"), function(response) {
         console.log('main js response - sign');
         console.log(response);
     });
@@ -102,6 +102,20 @@ $("#send_signed_call").click(function() {
 $("#send_witness_vote").click(function() {
     steem_keychain.requestWitnessVote($("#witness_username").val(), $("#witness").val(), $("#vote_wit").is(":checked"), function(response) {
         console.log('main js response - witness vote');
+        console.log(response);
+    });
+});
+
+$("#send_pu").click(function() {
+    steem_keychain.requestPowerUp($("#pu_username").val(), $("#pu_recipient").val(), $("#pu_steem").val(), function(response) {
+        console.log('main js response - power up');
+        console.log(response);
+    });
+});
+
+$("#send_pd").click(function() {
+    steem_keychain.requestPowerDown($("#pd_username").val(),  $("#pd_sp").val(), function(response) {
+        console.log('main js response - power down');
         console.log(response);
     });
 });
