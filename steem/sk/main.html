@@ -57,6 +57,7 @@
     <h3>Sign message</h3>
     <input type="text" placeholder="username" id="sign_username" />
     <input type="text" placeholder="message" id="sign_message" />
+    <input type="checkbox" id="sign_enforce" /><label for="sign_enforce">Enforce username</label>
     <select id="sign_method">
       <option>Memo</option>
       <option>Posting</option>
@@ -70,7 +71,7 @@
       <option>Posting</option>
       <option>Active</option>
     </select>
-    <input type="number" placeholder="1" value=1 id="addauth_weight" />
+    <input type="number" placeholder="1" id="addauth_weight" value=1 />
     <button id="send_addauth">Send</button>
     <h3>Remove Account Authority</h3>
     <input type="text" placeholder="username" id="removeauth_username" />
@@ -121,6 +122,16 @@
     <input type="text" placeholder="username" id="witness" />
     <input type="checkbox" id="vote_wit" /><label for="vote_wit">Vote for this witness</label>
     <button id="send_witness_vote">Send</button>
+    <h3>Power Up</h3>
+    <input type="text" placeholder="username" id="pu_username" />
+    <input type="text" placeholder="recipient" id="pu_recipient" />
+    <input type="number" placeholder="steem" id="pu_steem" />
+    <button id="send_pu">Send</button>
+    <h3>Power Down</h3>
+    <input type="text" placeholder="username" id="pd_username" />
+    <input type="number" placeholder="sp" id="pd_sp" />
+    <button id="send_pd">Send</button>
+
     <script src="jquery.js"></script>
     <script src="main.js?v=a"></script>
 </body>
