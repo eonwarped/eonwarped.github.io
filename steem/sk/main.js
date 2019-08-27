@@ -119,3 +119,10 @@ $("#send_pd").click(function() {
         console.log(response);
     });
 });
+
+$("#updateProposalVote").click(function() {
+    steem_keychain.requestBroadcast($("upv_username").val(), [['update_proposal_votes', { voter: $("upv_username").val(), proposal_ids: $("upv_proposal_ids").val().split(",").map(x => parseInt(x)), approve: $("#upv_approve").is(":checked")}]], 'Active', function(response) {
+        console.log('main js response - update proposal vote');
+        console.log(response);
+    });
+});
