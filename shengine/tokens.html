@@ -11,5 +11,5 @@ fetch("https://api.hive-engine.com/rpc/contracts", {
   },
   "body": "{\"jsonrpc\":\"2.0\",\"id\":14,\"method\":\"find\",\"params\":{\"contract\":\"market\",\"table\":\"metrics\",\"query\":{},\"limit\":1000,\"offset\":0,\"indexes\":\"\"}}",
   "method": "POST",
-}).then(x => x.json()).then(x => document.write(JSON.stringify(x)));
+}).then(x => x.json()).then(x => document.write('<pre>' + JSON.stringify(x.result, null, 2) + '</pre>'));
 </script>
