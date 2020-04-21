@@ -1,0 +1,12 @@
+<script>
+fetch("https://api.steem-engine.com/rpc/contracts", {
+  "headers": {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9",
+    "access-control-allow-origin": "*",
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":14,\"method\":\"find\",\"params\":{\"contract\":\"tokens\",\"table\":\"tokens\",\"query\":{},\"limit\":1000,\"offset\":0,\"indexes\":\"\"}}",
+  "method": "POST",
+}).then(x => x.json()).then(x => document.write('<pre>' + JSON.stringify(x.result, null, 2) + '</pre>'));
+</script>
