@@ -1,0 +1,170 @@
+<script>
+let rpc_id = 0;
+    
+function log(o) {
+    document.write("<pre>");
+    document.write(JSON.stringify(o, null, '\t'));
+    document.write("</pre>");
+    document.write("<hr>");
+}
+    
+async function getLastBlock() {
+    const res = await fetch("https://api.hive-engine.com/rpc/blockchain", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"getLatestBlockInfo\",\"params\":{}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function getBlock(blockNumber) {
+    const res = await fetch("https://api.hive-engine.com/rpc/blockchain", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"getBlockInfo\",\"params\":{\"blockNumber\": " + blockNumber + "}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function searchBlock(blockNumLower, blockNumHigher, prevLotteryTimestampMillis) {
+    let found = false;
+    let block;
+    let blockNum;
+    let currBlockTimestamp;
+    const prevLotteryTimestamp = new Date(prevLotteryTimestampMillis);
+    while (!found) {
+      blockNum = parseInt((blockNumLower + blockNumHigher) / 2);
+      console.log(blockNumLower + "," + blockNum + "," + blockNumHigher + " ? " + prevLotteryTimestampMillis);
+      block = await getBlock(blockNum);
+      currBlockTimestamp = new Date(block.timestamp + "Z");
+      if (currBlockTimestamp === prevLotteryTimestamp) {
+          found = true;
+      } else if (currBlockTimestamp > prevLotteryTimestamp) {
+          blockNumHigher = blockNum;
+      } else {
+          if (blockNumLower == blockNum) {
+            blockNumLower += 1;
+          } else {
+            blockNumLower = blockNum;
+          }
+      }
+      if (blockNumLower == blockNum && blockNum == blockNumHigher) {
+          return { blockNumber: blockNum, virtualTransactions: [] };
+      }
+    }
+    return block;
+}
+    
+async function getPool() {
+    const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"findOne\",\"params\":{\"contract\":\"mining\",\"table\":\"pools\",\"query\":{\"id\": \"TEST-EON:TEST-EON,TEST-EONM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+    
+async function getMiningPower() {
+    const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"mining\",\"table\":\"miningPower\",\"query\":{}}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function findPreviousLottery(lotteryEstBlock, lastBlockNumber, lotteryHiveBlock) {
+    let block = await searchBlock(lotteryEstBlock, lastBlockNumber, lotteryHiveBlock);
+    while (true) {
+        if (block.virtualTransactions.length > 0) {
+            for (let i = 0; i < block.virtualTransactions.length; i += 1) {
+                const vt = block.virtualTransactions[i];
+                if (vt.contract === 'mining') {
+                    found = true;
+                }
+                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining');
+                if (miningEvent) {
+                    return { block, miningEvent };
+                }
+            }
+        }
+        block = await getBlock(block.blockNumber - 1);
+        console.log(block.blockNumber);
+    }
+}
+
+function outputWinnerData(winners) {
+    document.write("<table><tr><td>Account</td><td>Mined</td><td>TEST.EON bal</td><td>TEST.EONM bal</td><td>Power</td><td>Probability</td><td>Ratio Mined</td></tr>");
+    Object.keys(winners)
+        .map(k => ({ account: k, ...winners[k] }))
+        .sort((x,y) => y.mined - x.mined)
+        .forEach(w => {
+           document.write(`<tr><td>${w.account}</td><td>${w.mined}</td><td>${w.balances[0] || "0"}</td><td>${w.balances[1] || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`);
+    });
+    document.write("</table>");
+}
+    
+async function main() {
+    const pool = await getPool();
+    log(pool);
+    
+    let lastBlock = await getLastBlock();
+    //log(lastBlock);
+    
+    let lastBlockNumber = lastBlock.blockNumber;
+    
+    let currentBlockTimestamp = new Date(lastBlock.timestamp + "Z");
+    let nextLotteryTimestamp = new Date(pool.nextLotteryTimestamp);
+    
+    let lotteryEstBlock;
+    let prevLotteryTimestampMillis = pool.nextLotteryTimestamp - 3600 * 1000;
+    
+    lotteryEstBlock = lastBlock.blockNumber + ((nextLotteryTimestamp - currentBlockTimestamp) / 1000 / 3) - 1200;
+    
+    const winners = {};
+    
+    let prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
+    log(prevLottery.miningEvent.data.winners);
+    
+    let totalMined = 0;
+    while (true) {
+      lastBlockNumber = prevLottery.block.blockNumber;
+      lotteryEstBlock = prevLottery.block.blockNumber - 1200;
+      prevLotteryTimestampMillis = prevLotteryTimestampMillis - 3600 * 1000;
+      prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
+      log(prevLottery.miningEvent.data.winners);
+      prevLottery.miningEvent.data.winners.forEach(w => {
+          if (!winners[w.winner]) {
+              winners[w.winner] = { mined: 0 };
+          }
+          winners[w.winner].mined += parseFloat(w.winningAmount);
+          totalMined += parseFloat(w.winningAmount);
+      });
+      if (new Date(prevLottery.block.timestamp + "Z") <= new Date("2020-10-13T00:52:03Z")) {
+          break;
+      }
+    }    
+    
+    const miningPower = await getMiningPower();
+    miningPower.forEach(mp => {
+        if (winners[mp.account]) {
+          winners[mp.account].balances = mp.balances;
+          winners[mp.account].power = mp.power.$numberDecimal;
+          winners[mp.account].probability = parseFloat(mp.power.$numberDecimal) / parseFloat(pool.totalPower);
+          winners[mp.account].ratioMined = winners[mp.account].mined / totalMined;
+        }
+    });
+    
+    outputWinnerData(winners);
+};
+
+main();
+</script>
