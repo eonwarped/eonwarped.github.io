@@ -132,7 +132,7 @@ async function main() {
     const winners = {};
     
     let prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
-    log(prevLottery.miningEvent.data.winners);
+    log({ blockNumber: prevLottery.block.blockNumber, winners: prevLottery.miningEvent.data.winners });
     
     let totalMined = 0;
     while (true) {
@@ -140,7 +140,7 @@ async function main() {
       lotteryEstBlock = prevLottery.block.blockNumber - 1200;
       prevLotteryTimestampMillis = prevLotteryTimestampMillis - 3600 * 1000;
       prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
-      log(prevLottery.miningEvent.data.winners);
+      log({ blockNumber: prevLottery.block.blockNumber, winners: prevLottery.miningEvent.data.winners });
       prevLottery.miningEvent.data.winners.forEach(w => {
           if (!winners[w.winner]) {
               winners[w.winner] = { mined: 0 };
