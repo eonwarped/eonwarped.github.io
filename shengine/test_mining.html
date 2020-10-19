@@ -84,7 +84,7 @@ async function getMiningPower() {
   "headers": {
     "content-type": "application/json",
   },
-  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"mining\",\"table\":\"miningPower\",\"query\":{\"id\": \"TEST-EON:TEST-EON,TEST-EONM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}}",
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"mining\",\"table\":\"miningPower\",\"query\":{\"id\": \"TEST-EON:TEST-EON,TEST-EONM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
   "method": "POST",
 });
     return (await res.json()).result;
