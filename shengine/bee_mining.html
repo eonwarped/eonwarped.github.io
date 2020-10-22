@@ -1,0 +1,193 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+    <h1>Mining Summary</h1>
+    <div id=miningResult></div>
+    <h2>Pool Data and Lottery Results</h2>
+    <div id=log></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+let rpc_id = 0;
+    
+function log(o) {
+    $("#log").html($("#log").html() + "<pre>" + JSON.stringify(o, null, '\t') + "</pre><hr>");
+}
+    
+async function getLastBlock() {
+    const res = await fetch("https://api.hive-engine.com/rpc/blockchain", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"getLatestBlockInfo\",\"params\":{}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function getBlock(blockNumber) {
+    const res = await fetch("https://api.hive-engine.com/rpc/blockchain", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"getBlockInfo\",\"params\":{\"blockNumber\": " + blockNumber + "}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function searchBlock(blockNumLower, blockNumHigher, prevLotteryTimestampMillis) {
+    let found = false;
+    let block;
+    let blockNum;
+    let currBlockTimestamp;
+    const prevLotteryTimestamp = new Date(prevLotteryTimestampMillis);
+    while (!found) {
+      blockNum = parseInt((blockNumLower + blockNumHigher) / 2);
+      console.log(blockNumLower + "," + blockNum + "," + blockNumHigher + " ? " + prevLotteryTimestampMillis);
+      block = await getBlock(blockNum);
+      currBlockTimestamp = new Date(block.timestamp + "Z");
+      if (currBlockTimestamp === prevLotteryTimestamp) {
+          found = true;
+      } else if (currBlockTimestamp > prevLotteryTimestamp) {
+          blockNumHigher = blockNum;
+      } else {
+          if (blockNumLower == blockNum) {
+            blockNumLower += 1;
+          } else {
+            blockNumLower = blockNum;
+          }
+      }
+      if (blockNumLower == blockNum && blockNum == blockNumHigher) {
+          return { blockNumber: blockNum, virtualTransactions: [] };
+      }
+    }
+    return block;
+}
+    
+async function getPool() {
+    const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"findOne\",\"params\":{\"contract\":\"mining\",\"table\":\"pools\",\"query\":{\"id\": \"BEE:WORKERBEE\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+    
+async function getMiningPower() {
+    const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"mining\",\"table\":\"miningPower\",\"query\":{\"id\": \"BEE:WORKERBEE\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function findPreviousLottery(lotteryEstBlock, lastBlockNumber, lotteryHiveBlock) {
+    let block = await searchBlock(lotteryEstBlock, lastBlockNumber, lotteryHiveBlock);
+    while (true) {
+        if (block.virtualTransactions.length > 0) {
+            for (let i = 0; i < block.virtualTransactions.length; i += 1) {
+                const vt = block.virtualTransactions[i];
+                if (vt.contract === 'mining') {
+                    found = true;
+                }
+                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining');
+                if (miningEvent) {
+                    return { block, miningEvent };
+                }
+            }
+        }
+        block = await getBlock(block.blockNumber - 1);
+        console.log(block.blockNumber);
+    }
+}
+
+function outputWinnerData(miningPower, pool, totalMined, winners) {
+    miningPower.forEach(mp => {
+        if (winners[mp.account]) {
+          winners[mp.account].balances = mp.balances;
+          winners[mp.account].power = mp.power.$numberDecimal;
+          winners[mp.account].probability = parseFloat(mp.power.$numberDecimal) / parseFloat(pool.totalPower);
+          winners[mp.account].ratioMined = winners[mp.account].mined / totalMined;
+        }
+    });
+    let table = "<table class='table'><thead><tr><th scope='col'>Account</th><th scope='col'>Mined</th><th scope='col'>WORKERBEE bal</th><th scope='col'>Power</th><th scope='col'>Probability</th><th scope='col'>Ratio Mined</th></tr></thead><tbody>";
+    Object.keys(winners)
+        .map(k => ({ account: k, ...winners[k] }))
+        .sort((x,y) => y.mined - x.mined)
+        .forEach(w => {
+           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${w.balances[0] || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
+    });
+    table += "</tbody></table>";
+    $("#miningResult").html(table);
+}
+    
+async function main() {
+    const pool = await getPool();
+    const miningPower = await getMiningPower();
+    log(pool);
+    
+    let lastBlock = await getLastBlock();
+    //log(lastBlock);
+    
+    let lastBlockNumber = lastBlock.blockNumber;
+    
+    let currentBlockTimestamp = new Date(lastBlock.timestamp + "Z");
+    let nextLotteryTimestamp = new Date(pool.nextLotteryTimestamp);
+    
+    let lotteryEstBlock;
+    let prevLotteryTimestampMillis = pool.nextLotteryTimestamp - 3600 * 1000;
+    
+    lotteryEstBlock = lastBlock.blockNumber + ((nextLotteryTimestamp - currentBlockTimestamp) / 1000 / 3) - 1200;
+    
+    const winners = {};
+    let totalMined = 0;
+    
+    let prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
+    log({ blockNumber: prevLottery.block.blockNumber, winners: prevLottery.miningEvent.data.winners });
+    prevLottery.miningEvent.data.winners.forEach(w => {
+          if (!winners[w.winner]) {
+              winners[w.winner] = { mined: 0 };
+          }
+          winners[w.winner].mined += parseFloat(w.winningAmount);
+          totalMined += parseFloat(w.winningAmount);
+      });
+    outputWinnerData(miningPower, pool, totalMined, winners);
+    
+    while (true) {
+      lastBlockNumber = prevLottery.block.blockNumber;
+      lotteryEstBlock = prevLottery.block.blockNumber - 1200;
+      prevLotteryTimestampMillis = prevLotteryTimestampMillis - 3600 * 1000;
+      prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
+      log({ blockNumber: prevLottery.block.blockNumber, winners: prevLottery.miningEvent.data.winners });
+      prevLottery.miningEvent.data.winners.forEach(w => {
+          if (!winners[w.winner]) {
+              winners[w.winner] = { mined: 0 };
+          }
+          winners[w.winner].mined += parseFloat(w.winningAmount);
+          totalMined += parseFloat(w.winningAmount);
+      });
+      outputWinnerData(miningPower, pool, totalMined, winners);
+
+      if (new Date(prevLottery.block.timestamp + "Z") <= new Date("2020-10-13T00:52:03Z")) {
+          break;
+      }
+    }    
+    
+    outputWinnerData(miningPower, pool, totalMined, winners);
+};
+
+main();
+</script>
+</body>
+</html>
+
+
