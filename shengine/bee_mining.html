@@ -162,6 +162,9 @@ async function main() {
       });
     outputWinnerData(miningPower, pool, totalMined, winners);
     
+    if (new Date(prevLottery.block.timestamp + "Z") <= new Date("2020-10-22T01:40:45Z")) {
+      return;
+    }
     while (true) {
       lastBlockNumber = prevLottery.block.blockNumber;
       lotteryEstBlock = prevLottery.block.blockNumber - 1200;
