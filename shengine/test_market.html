@@ -1,0 +1,153 @@
+<script>
+let rpc_id = 0;
+async function getBalances() {
+    const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"tokens\",\"table\":\"balances\",\"query\":{\"account\":\"eonwarped\"},\"limit\":500,\"offset\":0,\"indexes\":\"\"}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+    
+async function getBuyBook(tokens) {
+    const tokenMap = {};
+    for (t of tokens) {
+        const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+            "headers": {
+                "content-type": "application/json",
+            },
+            "body": "{\"jsonrpc\":\"2.0\",\"id\":21,\"method\":\"find\",\"params\":{\"contract\":\"market\",\"table\":\"buyBook\",\"query\":{\"symbol\":\"" + t + "\",\"account\":\"eonwarped\"},\"limit\":100,\"offset\":0,\"indexes\":[{\"index\":\"_id\",\"descending\":true}]}}",
+            "method": "POST",
+        });
+        tokenMap[t] = (await res.json()).result;
+    }
+    return tokenMap;
+}
+    
+async function getSellBook(tokens) {
+    const tokenMap = {};
+    for (t of tokens) {
+        const res = await fetch("https://api.hive-engine.com/rpc/contracts", {
+            "headers": {
+                "content-type": "application/json",
+            },
+            "body": "{\"jsonrpc\":\"2.0\",\"id\":22,\"method\":\"find\",\"params\":{\"contract\":\"market\",\"table\":\"sellBook\",\"query\":{\"symbol\":\"" + t + "\",\"account\":\"eonwarped\"},\"limit\":100,\"offset\":0,\"indexes\":[{\"index\":\"_id\",\"descending\":true}]}}",
+            "method": "POST",
+        });
+        tokenMap[t] = (await res.json()).result;
+    }
+    return tokenMap;
+}
+    
+async function getHistory(offset = 0) {
+    const hist = await fetch("https://accounts.hive-engine.com/accountHistory?account=eonwarped&limit=500&offset=" + offset, {
+        "body": null,
+        "method": "GET",
+    });
+    return await hist.json();
+}
+    
+async function processAndPrint(hive, tokenMap, history, tokens) {
+    document.write("<table><tr><td>Time</td><td>Operation</td><td>Token</td><td>Token Quantity</td><td>HIVE Quantity</td><td>Price</td>");
+    tokens.forEach(t => document.write("<td>" + t + " Balance</td>"));
+    document.write("<td>HIVE Balance</td><td>Holdings in Hive</td></tr>");
+    history.forEach(x => {
+      if (!tokens.find(t => x.symbol === t)) {
+        if (x.operation !== 'market_closeOrder' && !x.symbol) {
+            console.log(x);
+        }
+        return;
+      }
+      if (x.operation == 'market_sell' || x.operation == 'market_buy') {
+        const price = (parseFloat(x.quantitySteem) / parseFloat(x.quantityTokens));
+        document.write("<tr><td>" + new Date(x.timestamp*1000) + "</td><td>" + x.operation + "</td><td>" + x.symbol + "</td><td>" + x.quantityTokens + "</td><td>" + x.quantitySteem + "</td><td>" + price + "</td>");
+        tokens.forEach(t => document.write("<td>" + tokenMap[t].quantity + "</td>"));
+        document.write("<td>" + hive + "</td><td>" + tokens.reduce((x,y) => x + tokenMap[y].quantity * tokenMap[y].price, hive) + "</td></tr>");
+        if (x.operation == 'market_sell') {
+            tokenMap[x.symbol].quantity += parseFloat(x.quantityTokens);
+            hive -= parseFloat(x.quantitySteem);
+        } else {
+            tokenMap[x.symbol].quantity -= parseFloat(x.quantityTokens);
+            hive += parseFloat(x.quantitySteem);
+        }
+      } else if (x.operation == 'tokens_transfer') {
+        document.write("<tr><td>" + new Date(x.timestamp*1000) + "</td><td>" + x.operation + "</td><td>" + x.symbol + "</td><td>" + x.quantity + "</td><td></td><td></td>");
+        tokens.forEach(t => document.write("<td>" + tokenMap[t].quantity + "</td>"));
+        document.write("<td>" + hive + "</td><td>" + tokens.reduce((x,y) => x + tokenMap[y].quantity * tokenMap[y].price, hive) + "</td></tr>");
+        if (x.from === 'eonwarped') {
+          tokenMap[x.symbol].quantity -= parseFloat(x.quantity);
+        } else {
+          tokenMap[x.symbol].quantity += parseFloat(x.quantity);
+        }
+      } else if (x.operation == 'tokens_stake') {
+        document.write("<tr><td>" + new Date(x.timestamp*1000) + "</td><td>" + x.operation + "</td><td>" + x.symbol + "</td><td>" + x.quantity + "</td><td></td><td></td>");
+        tokens.forEach(t => document.write("<td>" + tokenMap[t].quantity + "</td>"));
+        document.write("<td>" + hive + "</td><td>" + tokens.reduce((x,y) => x + tokenMap[y].quantity * tokenMap[y].price, hive) + "</td></tr>");
+        tokenMap[x.symbol].quantity -= parseFloat(x.quantity);
+      } else {
+        //const price = (parseFloat(x.quantitySteem) / parseFloat(x.quantityTokens));  
+        //document.write("<tr><td>" + new Date(x.timestamp*1000) + "</td><td>" + x.operation + "</td><td>" + x.symbol + "</td><td>" + x.quantity || x.quantityTokens || x.quantityLocked + "</td><td>" + x.quantitySteem + "</td><td>" + price + "</td>");
+        //tokens.forEach(t => document.write("<td>" + tokenMap[t].quantity + "</td>"));
+        //document.write("<td>" + hive + "</td><td>" + tokens.reduce((x,y) => x + tokenMap[y].quantity * tokenMap[y].price, hive) + "</td></tr>");
+        //console.log(x);
+      }
+    });
+    document.write("</table>");
+    document.write("<br>");
+    document.write(JSON.stringify(tokenMap));
+    document.write("<br>");
+    document.write(hive);
+}
+
+async function main() {
+    const tokens = ['BEE', 'DEC'];
+    const balances = await getBalances();
+    document.write("BEE: ");
+    document.write(parseFloat(balances.find(x => x.symbol == 'BEE').balance));
+    document.write("<br>");
+    document.write("HIVE: ");
+    document.write(parseFloat(balances.find(x => x.symbol == 'SWAP.HIVE').balance));
+    document.write("<br>");
+    let hive = parseFloat(balances.find(x => x.symbol == 'SWAP.HIVE').balance);
+    
+    const tokenMap = {};
+    const buyBook = await getBuyBook(tokens);
+    const sellBook = await getSellBook(tokens);
+    
+    tokens.forEach(t => {
+        tokenMap[t] = {
+            quantity: parseFloat(balances.find(x => x.symbol == t).balance) + sellBook[t].map(x => parseFloat(x.quantity)).reduce((x,y) => x+y,0), 
+            price: 0
+        };
+        hive += buyBook[t].map(x => parseFloat(x.quantity) * parseFloat(x.price)).reduce((x,y) => x+y,0);
+    });
+    console.log(tokenMap);
+    console.log(hive);
+    
+    let history = await getHistory();
+    console.log(new Date(history[0].timestamp*1000));
+    // Ugly first scan for prices
+    history.filter(x => (x.operation == 'market_sell' || x.operation == 'market_buy') && tokens.find(t => x.symbol === t)).forEach(x => {
+        if (tokenMap[x.symbol].price == 0) {
+            tokenMap[x.symbol].price = (parseFloat(x.quantitySteem) / parseFloat(x.quantityTokens));
+        }
+    });
+    await processAndPrint(hive, tokenMap, history, tokens);
+    
+    let offset = 500;
+    // enable when ready
+    while (false) {
+      history = await getHistory(offset);
+      document.write("<hr>");
+      await processAndPrint(hive, tokenMap, history, tokens);
+      offset += 500;
+      if (history.length < 500) {
+          break;
+      }
+    }
+};
+
+main();
+</script>
