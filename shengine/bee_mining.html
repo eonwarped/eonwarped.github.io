@@ -160,6 +160,7 @@ async function main() {
           winners[w.winner].mined += parseFloat(w.winningAmount);
           totalMined += parseFloat(w.winningAmount);
       });
+    prevLotteryTimestampMillis = new Date(prevLottery.block.timestamp + "Z").getTime();
     outputWinnerData(miningPower, pool, totalMined, winners);
     
     if (new Date(prevLottery.block.timestamp + "Z") <= new Date("2020-10-22T01:40:45Z")) {
@@ -178,6 +179,8 @@ async function main() {
           winners[w.winner].mined += parseFloat(w.winningAmount);
           totalMined += parseFloat(w.winningAmount);
       });
+      prevLotteryTimestampMillis = new Date(prevLottery.block.timestamp + "Z").getTime();
+
       outputWinnerData(miningPower, pool, totalMined, winners);
 
       if (new Date(prevLottery.block.timestamp + "Z") <= new Date("2020-10-22T01:40:45Z")) {
