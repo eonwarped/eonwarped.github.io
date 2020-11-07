@@ -100,7 +100,7 @@ async function findPreviousLottery(lotteryEstBlock, lastBlockNumber, lotteryHive
                 if (vt.contract === 'mining') {
                     found = true;
                 }
-                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining');
+                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining' && e.data.poolId === "TEST-EON:TEST-EONM:FARM");
                 if (miningEvent) {
                     return { block, miningEvent };
                 }
