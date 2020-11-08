@@ -125,7 +125,7 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
         .map(k => ({ account: k, ...winners[k] }))
         .sort((x,y) => y.mined - x.mined)
         .forEach(w => {
-           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${(w.balances && w.balances[0]) || "0"}</td><td>${(w.nftBalances && w.nftBalances[0]) || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
+           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${(w.balances && w.balances[0]) || "0"}</td><td>${(w.nftBalances && JSON.stringify(w.nftBalances)) || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
     });
     table += "</tbody></table>";
     $("#miningResult").html(table);
