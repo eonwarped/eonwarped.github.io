@@ -115,6 +115,7 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
     miningPower.forEach(mp => {
         if (winners[mp.account]) {
           winners[mp.account].balances = mp.balances;
+          winners[mp.account].nftBalances = mp.nftBalances;
           winners[mp.account].power = mp.power.$numberDecimal;
           winners[mp.account].probability = parseFloat(mp.power.$numberDecimal) / parseFloat(pool.totalPower);
           winners[mp.account].ratioMined = winners[mp.account].mined / totalMined;
