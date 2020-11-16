@@ -146,9 +146,9 @@ async function main() {
     let nextLotteryTimestamp = new Date(pool.nextLotteryTimestamp);
     
     let lotteryEstBlock;
-    let prevLotteryTimestampMillis = pool.nextLotteryTimestamp - 3600 * 1000;
+    let prevLotteryTimestampMillis = pool.nextLotteryTimestamp - 3600 * 1000 * 24;
     
-    lotteryEstBlock = lastBlock.blockNumber + ((nextLotteryTimestamp - currentBlockTimestamp) / 1000 / 3) - 1200;
+    lotteryEstBlock = lastBlock.blockNumber + ((nextLotteryTimestamp - currentBlockTimestamp) / 1000 / 3) - 1200 * 24;
     
     const winners = {};
     let totalMined = 0;
@@ -167,8 +167,8 @@ async function main() {
     
     while (true) {
       lastBlockNumber = prevLottery.block.blockNumber;
-      lotteryEstBlock = prevLottery.block.blockNumber - 1200;
-      prevLotteryTimestampMillis = prevLotteryTimestampMillis - 3600 * 1000;
+      lotteryEstBlock = prevLottery.block.blockNumber - 1200 * 24;
+      prevLotteryTimestampMillis = prevLotteryTimestampMillis - 3600 * 1000 * 24;
       prevLottery = await findPreviousLottery(lotteryEstBlock, lastBlockNumber, prevLotteryTimestampMillis);
       log({ blockNumber: prevLottery.block.blockNumber, winners: prevLottery.miningEvent.data.winners });
       prevLottery.miningEvent.data.winners.forEach(w => {
