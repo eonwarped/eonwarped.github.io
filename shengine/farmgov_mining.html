@@ -74,7 +74,7 @@ async function getPool() {
   "headers": {
     "content-type": "application/json",
   },
-  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"findOne\",\"params\":{\"contract\":\"mining\",\"table\":\"pools\",\"query\":{\"id\": \"FARMGOV::FARM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"findOne\",\"params\":{\"contract\":\"mining\",\"table\":\"pools\",\"query\":{\"id\": \"FARMGOV:FARM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
   "method": "POST",
 });
     return (await res.json()).result;
@@ -85,7 +85,7 @@ async function getMiningPower() {
   "headers": {
     "content-type": "application/json",
   },
-  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"mining\",\"table\":\"miningPower\",\"query\":{\"id\": \"FARMGOV::FARM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"mining\",\"table\":\"miningPower\",\"query\":{\"id\": \"FARMGOV:FARM\"},\"indexes\":[{\"index\": \"power\", \"descending\": true}]}}",
   "method": "POST",
 });
     return (await res.json()).result;
@@ -100,7 +100,7 @@ async function findPreviousLottery(lotteryEstBlock, lastBlockNumber, lotteryHive
                 if (vt.contract === 'mining') {
                     found = true;
                 }
-                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining' && e.data.poolId === "FARMGOV::FARM");
+                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining' && e.data.poolId === "FARMGOV:FARM");
                 if (miningEvent) {
                     return { block, miningEvent };
                 }
@@ -121,12 +121,12 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
           winners[mp.account].ratioMined = winners[mp.account].mined / totalMined;
         }
     });
-    let table = "<table class='table'><thead><tr><th scope='col'>Account</th><th scope='col'>Mined</th><th scope='col'>NFT power</th><th scope='col'>Power</th><th scope='col'>Probability</th><th scope='col'>Ratio Mined</th></tr></thead><tbody>";
+    let table = "<table class='table'><thead><tr><th scope='col'>Account</th><th scope='col'>Mined</th><th scope='col'>FARMGOV balance</th><th scope='col'>Power</th><th scope='col'>Probability</th><th scope='col'>Ratio Mined</th></tr></thead><tbody>";
     Object.keys(winners)
         .map(k => ({ account: k, ...winners[k] }))
         .sort((x,y) => y.mined - x.mined)
         .forEach(w => {
-           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${(w.nftBalances && JSON.stringify(w.nftBalances)) || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
+           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${(w.balances && JSON.stringify(w.balances)) || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
     });
     table += "</tbody></table>";
     $("#miningResult").html(table);
