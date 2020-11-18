@@ -190,7 +190,7 @@ async function findPreviousLottery(lotteryEstBlock, lastBlockNumber, lotteryHive
 
                 }
 
-                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining' && e.data.poolId === "FARM::FARM");
+                let miningEvent = vt.logs && JSON.parse(vt.logs).events.find(e => e.contract === 'mining' && e.data.poolId === "MYTHICAL::MYTHICAL");
 
                 if (miningEvent) {
 
