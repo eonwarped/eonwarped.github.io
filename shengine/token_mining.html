@@ -222,6 +222,8 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
 
           winners[mp.account].balances = mp.balances;
 
+          winners[mp.account].nftBalances = mp.nftBalances;
+
           winners[mp.account].power = mp.power.$numberDecimal;
 
           winners[mp.account].probability = parseFloat(mp.power.$numberDecimal) / parseFloat(pool.totalPower);
@@ -232,7 +234,7 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
 
     });
 
-    let table = "<table class='table'><thead><tr><th scope='col'>Account</th><th scope='col'>Mined</th><th scope='col'>WORKERBEE bal</th><th scope='col'>Power</th><th scope='col'>Probability</th><th scope='col'>Ratio Mined</th></tr></thead><tbody>";
+    let table = "<table class='table'><thead><tr><th scope='col'>Account</th><th scope='col'>Mined</th><th scope='col'>Token Balances</th><th scope='col'>NFT Token Balances</th><th scope='col'>Power</th><th scope='col'>Probability</th><th scope='col'>Ratio Mined</th></tr></thead><tbody>";
 
     Object.keys(winners)
 
@@ -242,7 +244,7 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
 
         .forEach(w => {
 
-           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${w.balances[0] || "0"}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
+           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${JSON.stringify(w.balances)}</td><td>${JSON.stringify(w.nftBalances)}</td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
 
     });
 
