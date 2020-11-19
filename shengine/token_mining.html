@@ -244,7 +244,7 @@ function outputWinnerData(miningPower, pool, totalMined, winners) {
 
         .forEach(w => {
 
-           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${JSON.stringify(w.balances)}</td><td>${JSON.stringify(w.nftBalances)}</td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
+           table += `<tr><th scope="row">${w.account}</th><td>${w.mined}</td><td>${JSON.stringify(w.balances)}</td><td>${JSON.stringify(w.nftBalances)}</td><td>${w.power}</td><td>${w.probability}</td><td>${w.ratioMined}</td></tr>`;
 
     });
 
