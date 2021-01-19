@@ -1,0 +1,68 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+    <h1>test Witness Summary</h1>
+    <div id=witnessSummary></div>
+    <h2>Log</h2>
+    <div id=log></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+let rpc_id = 0;
+
+const urlParams = new URLSearchParams(window.location.search);
+const node = urlParams.get('node') || 'http://155.138.150.67:5000';
+
+function log(o) {
+    $("#log").html($("#log").html() + "<pre>" + JSON.stringify(o, null, '\t') + "</pre><hr>");
+}
+    
+async function getLastBlock() {
+    const res = await fetch(`${node}/blockchain`, {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"getLatestBlockInfo\",\"params\":{}}",
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+async function contractFind(contract, table, query, indexes=[], limit=1000, offset=0) {
+    const res = await fetch(`${node}/contracts`, {
+  "headers": {
+    "content-type": "application/json",
+  },
+  "body": `{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"find\",\"params\":{\"contract\":\"${contract}\",\"table\":\"${table}\",\"query\":${JSON.stringify(query)},\"indexes\":${JSON.stringify(indexes)}}}`,
+  "method": "POST",
+});
+    return (await res.json()).result;
+}
+
+function outputData(header, data, keys) {
+    let table = "<h3>" + header + "</h3><table class='table'><thead><tr>";
+    keys.forEach(k => { table += "<th scope='col'>" + k + "</th>"; });
+    table += "</tr></thead><tbody>";
+    data.forEach(d => {
+        table += <tr><th scope='row'>" + d['_id'];
+        keys.forEach(k => {
+          table += "<td>" + JSON.stringify(d[k]) + "</td>";
+        }
+    });
+    table += "</tbody></table>";
+    $("#witnessSummary").html($("#witnessSummary").html() + table);
+}
+    
+async function main() {
+    log("Witness Params:");
+    log(await contractFind("witnesses", "params"));
+    outputData("Witnesses", await contractFind("witnesses", "witnesses", {}, [{'index': 'approvalWeight', 'descending': true}]), ["account", "approvalWeight", "IP", "RPCPort", "P2PPort", "enabled", "missedRounds", "missedRoundsInARow", "verifiedRounds", "lastRoundVerified", "lastBlockVerified"]);
+};
+
+main();
+</script>
+</body>
+</html>
