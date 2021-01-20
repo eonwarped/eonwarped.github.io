@@ -31,8 +31,9 @@ async function getLastBlock() {
     return (await res.json()).result;
 }
 
-async function contractFind(contract, table, query={}, indexes=[], limit=1000, offset=0) {
-    const res = await fetch(`${node}/contracts`, {
+async function contractFind(contract, table, query={}, indexes=[], limit=1000, offset=0, useNode=node) {
+    try {
+    const res = await fetch(`${useNode}/contracts`, {
   "headers": {
     "content-type": "application/json",
   },
@@ -40,6 +41,10 @@ async function contractFind(contract, table, query={}, indexes=[], limit=1000, o
   "method": "POST",
 });
     return (await res.json()).result;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
 }
 
 function outputData(header, data, keys) {
@@ -49,7 +54,7 @@ function outputData(header, data, keys) {
     data.forEach(d => {
         table += "<tr><th scope='row'>" + d['_id'] + "</th>";
         keys.forEach(k => {
-          table += "<td>" + (typeof d[k] === 'string' ?     d[k] : JSON.stringify(d[k])) + "</td>";
+          table += `<td id="${k}">` + (typeof d[k] === 'string' ? d[k] : JSON.stringify(d[k])) + "</td>";
         });
     });
     table += "</tbody></table>";
@@ -60,7 +65,15 @@ async function main() {
     log("Head Block: " + (await getLastBlock()).blockNumber);
     log("Witness Params:");
     log(await contractFind("witnesses", "params"));
-    outputData("Witnesses", await contractFind("witnesses", "witnesses", {}, [{'index': 'approvalWeight', 'descending': true}]), ["account", "approvalWeight", "IP", "RPCPort", "P2PPort", "enabled", "missedRounds", "missedRoundsInARow", "verifiedRounds", "lastRoundVerified", "lastBlockVerified"]);
+    const witnesses = await contractFind("witnesses", "witnesses", {}, [{'index': 'approvalWeight', 'descending': true}]);
+    outputData("Witnesses", witnesses, ["account", "approvalWeight", "IP", "RPCPort", "P2PPort", "enabled", "missedRounds", "missedRoundsInARow", "verifiedRounds", "lastRoundVerified", "lastBlockVerified","reportedLastBlockVerified"]);
+    witnesses.forEach(async wit => {
+        if (wit.enabled) {
+            const params = await contractFind("witnesses", "params",  {}, [], 1000, 0, `http://${wit.IP}:${wit.RPCPort}`);
+            console.log(params);
+            $(`#witnessSummary tr:contains('${wit.account}')`).find('#reportedLastBlockVerified').html(params[0].lastVerifiedBlockNumber);
+        }
+    });
 };
 
 main();
