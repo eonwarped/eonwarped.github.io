@@ -63,9 +63,9 @@ function outputData(header, data, keys) {
     keys.forEach(k => { table += "<th scope='col'>" + k + "</th>"; });
     table += "</tr></thead><tbody>";
     data.forEach(d => {
-        table += "<tr><th scope='row'>" + d['_id'] + "</th>";
+        table += `<tr id='${d['_id']}'><th scope='row'>${d['_id']}</th>`;
         keys.forEach(k => {
-          table += `<td id="${k}">` + (typeof d[k] === 'string' ? d[k] : JSON.stringify(d[k])) + "</td>";
+          table += `<td id='${k}'>` + (typeof d[k] === 'string' ? d[k] : JSON.stringify(d[k])) + "</td>";
         });
     });
     table += "</tbody></table>";
@@ -83,9 +83,9 @@ async function main() {
             const witRpcUrl = `http://${wit.IP}:${wit.RPCPort}`;
             const params = await contractFind("witnesses", "params",  {}, [], 1000, 0, witRpcUrl);
             console.log(params);
-            $(`#witnessSummary tr:contains('${wit.account}')`).find('#reportedLastBlockVerified').html(params[0].lastVerifiedBlockNumber);
+            $(`#witnessSummary tr[id='${wit._id}']`).find('#reportedLastBlockVerified').html(params[0].lastVerifiedBlockNumber);
             const status = await getStatus(witRpcUrl);
-            $(`#witnessSummary tr:contains('${wit.account}')`).find('#version').html(status.SSCnodeVersion);
+            $(`#witnessSummary tr[id='${wit._id}']`).find('#version').html(status.SSCnodeVersion);
          }
     });
 };
