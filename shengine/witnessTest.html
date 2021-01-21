@@ -77,7 +77,12 @@ async function main() {
     log("Witness Params:");
     log(await contractFind("witnesses", "params"));
     const witnesses = await contractFind("witnesses", "witnesses", {}, [{'index': 'approvalWeight', 'descending': true}]);
-    outputData("Witnesses", witnesses, ["account", "approvalWeight", "IP", "RPCPort", "P2PPort", "enabled", "missedRounds", "missedRoundsInARow", "verifiedRounds", "lastRoundVerified", "lastBlockVerified","reportedLastBlockVerified", "version"]);
+    const testBeeBalances = await contractFind("tokens", "balances", { "symbol": "BEE", "account": { $in: witnesses.map(w => w.account) }}, []);
+    testBeeBalances.forEach(bal => { witnesses.find( x => x.account === bal.account ).testnetBeeBalance = bal.balance });
+    const beeBalances = await contractFind("tokens", "balances", { "symbol": "BEE", "account": { $in: witnesses.map(w => w.account) }}, [], 1000, 0, "https://api.hive-engine.com/rpc");
+    beeBalances.forEach(bal => { witnesses.find( x => x.account === bal.account ).mainnetBeeBalance = bal.balance });
+    outputData("Witnesses", witnesses, ["account", "approvalWeight", "IP", "RPCPort", "P2PPort", "enabled", "missedRounds", "missedRoundsInARow", "verifiedRounds", "lastRoundVerified", "lastBlockVerified","reportedLastBlockVerified", "version", "testnetBeeBalance", "mainnetBeeBalance"]);
+        
     witnesses.forEach(async wit => {
         if (wit.enabled) {
             const witRpcUrl = `http://${wit.IP}:${wit.RPCPort}`;
