@@ -41,32 +41,20 @@ async function getRawTraits(id) {
   $('#data-table tr:last').after(`<tr><td>${id}</td><td>${rawGeneticScore}</td><td>${rawWearableScore}</td></tr>`);
 }
 
-
-async function getAll() {
-await getRawTraits(1696);
-await getRawTraits(1811);
-await getRawTraits(675);
-await getRawTraits(1818);
-await getRawTraits(1587);
-await getRawTraits(1764);
-await getRawTraits(1645);
-await getRawTraits(1551);
-await getRawTraits(677);
-await getRawTraits(1767);
-await getRawTraits(981);
-await getRawTraits(1549);
-await getRawTraits(1725);
-await getRawTraits(1817);
-await getRawTraits(1580);
-await getRawTraits(676);
-await getRawTraits(1751);
-await getRawTraits(1550);
-await getRawTraits(1812);
-await getRawTraits(1762);
-}
-
-getAll();
-
+$(function() {
+    //https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/21152762#21152762
+    var qd = {};
+    if (location.search)
+      location.search.substr(1).split("&").forEach(function(item) {
+        var s = item.split("="),
+          k = s[0],
+          v = s[1] && decodeURIComponent(s[1]); //  null-coalescing / short-circuit
+       //(k in qd) ? qd[k].push(v) : qd[k] = [v]
+       (qd[k] = qd[k] || []).push(v) // null-coalescing / short-circuit
+    })
+    var ottoId = qd.id[0];
+    getRawTraits(ottoId);
+  });
 
 </script>
 </head>
