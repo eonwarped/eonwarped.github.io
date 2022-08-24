@@ -42,6 +42,12 @@ async function getRawTraits(id) {
   }
   $('#data-table tr:last').after(`<tr><td>${id}</td><td>${rawGeneticScore}</td><td>${rawWearableScore}</td></tr>`);
 }
+  
+async function getAll(ids) {
+  for (let i = 0; i < ids.length; i++) {
+    await getRawTraits(ids[i]);
+  }
+}
 
 $(function() {
     //https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript/21152762#21152762
@@ -54,8 +60,8 @@ $(function() {
        //(k in qd) ? qd[k].push(v) : qd[k] = [v]
        (qd[k] = qd[k] || []).push(v) // null-coalescing / short-circuit
     })
-    var ottoId = qd.id[0];
-    getRawTraits(ottoId);
+    var ottoIds = qd.id[0].split(",");
+    getRawTraits(ottoIds);
   });
 
 </script>
