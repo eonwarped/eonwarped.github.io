@@ -1,3 +1,4 @@
+
 <html>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
@@ -21,6 +22,7 @@ async function getRawTraits(id) {
 
    let rawWearableScore = 0;
    let rawGeneticScore = 0;
+   let rawWearableBonus = {};
 
   for (let i = 0; i < rawTraits.length; i++) {
     const rawTrait = rawTraits[i];
@@ -39,8 +41,16 @@ async function getRawTraits(id) {
     } else if (traitMetaJson.details && !traitMetaJson.details.wearable) {
        rawGeneticScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
     }
+
+    if (traitMetaJson.details && traitMetaJson.details.labels) {
+        const labels = [];
+        traitMetaJson.details.labels.forEach(l => labels.push(l.name));
+        if (labels.length) {
+          rawWearableBonus[traitMetaJson.details.type] = labels.join(",");
+        }
+    }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${rawGeneticScore}</td><td>${rawWearableScore}</td></tr>`);
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${rawGeneticScore}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</tr>`);
 }
   
 async function getAll(ids) {
@@ -68,7 +78,7 @@ $(function() {
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Raw Genetic Score</td><td>Raw Wearable Score</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Raw Genetic Score</td><td>Raw Wearable Score</td><td>Label Map</td></tr>
   </tbody></table>
 </body>
 </html>
