@@ -22,6 +22,7 @@ async function getRawTraits(id) {
 
    let rawWearableScore = 0;
    let rawGeneticScore = 0;
+   let rawGeneticBrs = 0;
    let rawWearableBonus = {};
 
   for (let i = 0; i < rawTraits.length; i++) {
@@ -40,6 +41,7 @@ async function getRawTraits(id) {
        rawWearableScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
     } else if (traitMetaJson.details && !traitMetaJson.details.wearable) {
        rawGeneticScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
+       rawGeneticBrs += traitMetaJson.details.base_rarity_score;
     }
 
     if (traitMetaJson.details && traitMetaJson.details.labels) {
@@ -50,7 +52,7 @@ async function getRawTraits(id) {
         }
     }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${rawGeneticScore}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</tr>`);
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</tr>`);
 }
   
 async function getAll(ids) {
@@ -78,7 +80,7 @@ $(function() {
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Raw Genetic Score</td><td>Raw Wearable Score</td><td>Label Map</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Raw Wearable Score</td><td>Label Map</td></tr>
   </tbody></table>
 </body>
 </html>
