@@ -24,11 +24,25 @@ async function getRawTraits(id) {
    let rawGeneticScore = 0;
    let rawGeneticBrs = 0;
    let rawWearableBonus = {};
+   let rawAttributes = {
+     "STR": 0,
+     "DEF": 0,
+     "DEX" :0,
+     "INT": 0,
+     "LUK": 0,
+     "CON": 0,
+     "CUTE": 0,
+   };
 
    const ottoMetadata = await (await fetch("https://api.otterclam.finance/ottos/metadata/" + id, { "headers": {}, "body": null, "method": "GET"})).json();
    const constellationBoost = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation Boost');
    const constellationBoostValue = constellationBoost ? constellationBoost.value : 0;
    const gender = ottoMetadata.otto_traits.find(x => x.trait_type === 'Gender').value;
+
+   const attributes = {};
+   ottoMetadata.otto_attrs.forEach(attr => {
+     attributes[attr.trait_type] = attr.value;
+   });
 
   for (let i = 0; i < rawTraits.length; i++) {
     const rawTrait = rawTraits[i];
@@ -47,6 +61,13 @@ async function getRawTraits(id) {
     } else if (traitMetaJson.details && !traitMetaJson.details.wearable) {
        rawGeneticScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
        rawGeneticBrs += traitMetaJson.details.base_rarity_score;
+       if (traitMetaJson.details.stats) {
+         traitMetaJson.details.stats.forEach(s => {
+           if (s.value !== 'N/A') {
+             rawAttributes[s.name] += Number(s.value);
+           }
+         });
+       }
     }
 
     if (traitMetaJson.details && traitMetaJson.details.labels) {
@@ -57,7 +78,7 @@ async function getRawTraits(id) {
         }
     }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${constellationBoostValue}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</tr>`);
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${constellationBoostValue}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td></tr>`);
 }
   
 async function getAll(ids) {
@@ -85,7 +106,7 @@ $(function() {
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Constellation Boost</td><td>Raw Wearable Score</td><td>Label Map</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Constellation Boost</td><td>Raw Wearable Score</td><td>Label Map</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td></tr>
   </tbody></table>
 </body>
 </html>
