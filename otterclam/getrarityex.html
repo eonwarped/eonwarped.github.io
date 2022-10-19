@@ -38,6 +38,8 @@ async function getRawTraits(id) {
    const constellationBoost = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation Boost');
    const constellationBoostValue = constellationBoost ? constellationBoost.value : 0;
    const gender = ottoMetadata.otto_traits.find(x => x.trait_type === 'Gender').value;
+   const constellation = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation').value;
+   const birthday = new Date(ottoMetadata.otto_traits.find(x => x.trait_type === 'Birthday').value*1000);
 
    const attributes = {};
    ottoMetadata.otto_attrs.forEach(attr => {
@@ -78,7 +80,7 @@ async function getRawTraits(id) {
         }
     }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${constellationBoostValue}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td></tr>`);
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${rawWearableScore}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${JSON.stringify(rawWearableBonus)}</td></tr>`);
 }
   
 async function getAll(ids) {
@@ -106,7 +108,7 @@ $(function() {
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Constellation Boost</td><td>Raw Wearable Score</td><td>Label Map</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Raw Wearable Score</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Label Map</td></tr>
   </tbody></table>
 </body>
 </html>
