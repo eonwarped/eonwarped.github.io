@@ -17,7 +17,7 @@ const ottopiaItemAbi = [{"anonymous":false,"inputs":[{"indexed":false,"internalT
 
 const ottopiaItem = new web3.eth.Contract(ottopiaItemAbi, "0xbd29ee9a2ce0c794eaf09bedca9387f4566377d5");
 
-async function getRawTraits(id) {
+async function getRawTraits(id, skipRaw) {
   const rawTraits = await ottopia.methods.rawTraitsOf(id).call();
 
    let rawWearableScore = 0;
@@ -40,52 +40,58 @@ async function getRawTraits(id) {
    const gender = ottoMetadata.otto_traits.find(x => x.trait_type === 'Gender').value;
    const constellation = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation').value;
    const birthday = new Date(ottoMetadata.otto_traits.find(x => x.trait_type === 'Birthday').value*1000);
+   const level = ottoMetadata.otto_traits.find(x => x.trait_type === 'Level').value;
+   const exp = ottoMetadata.otto_traits.find(x => x.trait_type === 'EXP').value;
+   const ap = ottoMetadata.otto_traits.find(x => x.trait_type === 'AP').value;
 
    const attributes = {};
    ottoMetadata.otto_attrs.forEach(attr => {
      attributes[attr.trait_type] = attr.value;
    });
 
-  for (let i = 0; i < rawTraits.length; i++) {
-    const rawTrait = rawTraits[i];
-    const encodedId = await ottopiaItem.methods.encode(i, rawTrait).call();
-    const traitMeta = await fetch("https://api.otterclam.finance/items/metadata/" + encodedId, {
-  "headers": {},
-  "body": null,
-  "method": "GET"
-});
-   const traitMetaJson = await traitMeta.json();
-    console.log(i+1);
-    console.log(JSON.stringify(traitMetaJson, null, 2));
+  if (!skipRaw) {
+    for (let i = 0; i < rawTraits.length; i++) {
+      const rawTrait = rawTraits[i];
+      const encodedId = await ottopiaItem.methods.encode(i, rawTrait).call();
+      const traitMeta = await fetch("https://api.otterclam.finance/items/metadata/" + encodedId, {
+    "headers": {},
+    "body": null,
+    "method": "GET"
+})  ;
+     const traitMetaJson = await traitMeta.json();
+      console.log(i+1);
+      console.log(JSON.stringify(traitMetaJson, null, 2));
   
-    if(traitMetaJson.details && traitMetaJson.details.wearable) {
-       rawWearableScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
-    } else if (traitMetaJson.details && !traitMetaJson.details.wearable) {
-       rawGeneticScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
-       rawGeneticBrs += traitMetaJson.details.base_rarity_score;
-       if (traitMetaJson.details.stats) {
-         traitMetaJson.details.stats.forEach(s => {
-           if (s.value !== 'N/A') {
-             rawAttributes[s.name] += Number(s.value);
-           }
-         });
-       }
-    }
+      if(traitMetaJson.details && traitMetaJson.details.wearable) {
+         rawWearableScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
+      } else if (traitMetaJson.details && !traitMetaJson.details.wearable) {
+         rawGeneticScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
+         rawGeneticBrs += traitMetaJson.details.base_rarity_score;
+         if (traitMetaJson.details.stats) {
+           traitMetaJson.details.stats.forEach(s => {
+             if (s.value !== 'N/A') {
+               rawAttributes[s.name] += Number(s.value);
+             }
+           });
+         }
+      }
 
-    if (traitMetaJson.details && traitMetaJson.details.labels) {
-        const labels = [];
-        traitMetaJson.details.labels.forEach(l => labels.push(l.name));
-        if (labels.length) {
-          rawWearableBonus[traitMetaJson.details.type] = labels.join(",");
-        }
+      if (traitMetaJson.details && traitMetaJson.details.labels) {
+          const labels = [];
+          traitMetaJson.details.labels.forEach(l => labels.push(l.name));
+          if (labels.length) {
+            rawWearableBonus[traitMetaJson.details.type] = labels.join(",");
+          }
+      }
     }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${rawWearableScore}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${JSON.stringify(rawWearableBonus)}</td></tr>`);
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td>` +
+     (skipRaw ? '' : `<td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td></tr>`));
 }
   
-async function getAll(ids) {
+async function getAll(ids, skipRaw) {
   for (let i = 0; i < ids.length; i++) {
-    await getRawTraits(ids[i]);
+    await getRawTraits(ids[i], skipRaw);
   }
 }
 
@@ -101,14 +107,15 @@ $(function() {
        (qd[k] = qd[k] || []).push(v) // null-coalescing / short-circuit
     })
     var ottoIds = qd.id[0].split(",");
-    getAll(ottoIds);
+    var skipRaw = (qd.skipRaw && qd.skipRaw[0]);
+    getAll(ottoIds, skipRaw);
   });
 
 </script>
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Raw Wearable Score</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Label Map</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Level</td><td>EXP</td><td>AP</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Raw Wearable Score</td><td>Raw Genetic Score</td><td>Raw Genetic BRS</td><td>Label Map</td></tr>
   </tbody></table>
 </body>
 </html>
