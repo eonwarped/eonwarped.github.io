@@ -17,81 +17,68 @@ const ottopiaItemAbi = [{"anonymous":false,"inputs":[{"indexed":false,"internalT
 
 const ottopiaItem = new web3.eth.Contract(ottopiaItemAbi, "0xbd29ee9a2ce0c794eaf09bedca9387f4566377d5");
 
-async function getRawTraits(id, skipRaw) {
-  const rawTraits = await ottopia.methods.rawTraitsOf(id).call();
+async function getRawTraits(id) {
+  //const rawTraits = await ottopia.methods.rawTraitsOf(id).call();
 
-   let rawWearableScore = 0;
-   let rawGeneticScore = 0;
-   let rawGeneticBrs = 0;
-   let rawWearableBonus = {};
-   let rawAttributes = {
-     "STR": 0,
-     "DEF": 0,
-     "DEX" :0,
-     "INT": 0,
-     "LUK": 0,
-     "CON": 0,
-     "CUTE": 0,
-   };
+  let rawWearableScore = 0;
+  let rawGeneticScore = 0;
+  let rawGeneticBrs = 0;
+  let rawWearableBonus = {};
+  let rawAttributes = {
+    "STR": 0,
+    "DEF": 0,
+    "DEX" :0,
+    "INT": 0,
+    "LUK": 0,
+    "CON": 0,
+    "CUTE": 0,
+  };
 
-   const ottoMetadata = await (await fetch("https://api.otterclam.finance/ottos/metadata/" + id, { "headers": {}, "body": null, "method": "GET"})).json();
-   const constellationBoost = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation Boost');
-   const constellationBoostValue = constellationBoost ? constellationBoost.value : 0;
-   const gender = ottoMetadata.otto_traits.find(x => x.trait_type === 'Gender').value;
-   const constellation = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation').value;
-   const birthday = new Date(ottoMetadata.otto_traits.find(x => x.trait_type === 'Birthday').value*1000);
-   const level = ottoMetadata.otto_traits.find(x => x.trait_type === 'Level').value;
-   const exp = ottoMetadata.otto_traits.find(x => x.trait_type === 'EXP').value;
-   const ap = ottoMetadata.otto_traits.find(x => x.trait_type === 'AP').value;
+  const ottoMetadata = await (await fetch("https://api.otterclam.finance/ottos/metadata/" + id + "?details=true", { "headers": {}, "body": null, "method": "GET"})).json();
+  const constellationBoost = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation Boost');
+  const constellationBoostValue = constellationBoost ? constellationBoost.value : 0;
+  const gender = ottoMetadata.otto_traits.find(x => x.trait_type === 'Gender').value;
+  const constellation = ottoMetadata.otto_traits.find(x => x.trait_type === 'Constellation').value;
+  const birthday = new Date(ottoMetadata.otto_traits.find(x => x.trait_type === 'Birthday').value*1000);
+  const level = ottoMetadata.otto_traits.find(x => x.trait_type === 'Level').value;
+  const exp = ottoMetadata.otto_traits.find(x => x.trait_type === 'EXP').value;
+  const ap = ottoMetadata.otto_traits.find(x => x.trait_type === 'AP').value;
 
-   const attributes = {};
-   ottoMetadata.otto_attrs.forEach(attr => {
-     attributes[attr.trait_type] = attr.value;
-   });
+  const attributes = {};
+  ottoMetadata.otto_attrs.forEach(attr => {
+    attributes[attr.trait_type] = attr.value;
+  });
 
-  if (!skipRaw) {
-    for (let i = 0; i < rawTraits.length; i++) {
-      const rawTrait = rawTraits[i];
-      const encodedId = await ottopiaItem.methods.encode(i, rawTrait).call();
-      const traitMeta = await fetch("https://api.otterclam.finance/items/metadata/" + encodedId, {
-    "headers": {},
-    "body": null,
-    "method": "GET"
-})  ;
-     const traitMetaJson = await traitMeta.json();
-      console.log(i+1);
-      console.log(JSON.stringify(traitMetaJson, null, 2));
-  
-      if(traitMetaJson.details && traitMetaJson.details.wearable) {
-         rawWearableScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
-      } else if (traitMetaJson.details && !traitMetaJson.details.wearable) {
-         rawGeneticScore += traitMetaJson.details.base_rarity_score + traitMetaJson.details.relative_rarity_score;
-         rawGeneticBrs += traitMetaJson.details.base_rarity_score;
-         if (traitMetaJson.details.stats) {
-           traitMetaJson.details.stats.forEach(s => {
-             if (s.value !== 'N/A') {
-               rawAttributes[s.name] += Number(s.value);
-             }
-           });
-         }
-      }
-
-      if (traitMetaJson.details && traitMetaJson.details.labels) {
-          const labels = [];
-          traitMetaJson.details.labels.forEach(l => labels.push(l.name));
-          if (labels.length) {
-            rawWearableBonus[traitMetaJson.details.type] = labels.join(",");
+  const nativeTraits = ottoMetadata.otto_native_traits;
+  for (let i = 0; i < nativeTraits.length; i++) {
+    const nativeTrait = nativeTraits[i];
+    if(nativeTrait.wearable) {
+      rawWearableScore += nativeTrait.base_rarity_score + nativeTrait.relative_rarity_score;
+    } else {
+      rawGeneticScore += nativeTrait.base_rarity_score + nativeTrait.relative_rarity_score;
+      rawGeneticBrs += nativeTrait.base_rarity_score;
+      if (nativeTrait.stats) {
+        nativeTrait.stats.forEach(s => {
+          if (s.value !== 'N/A') {
+            rawAttributes[s.name] += Number(s.value);
           }
+        });
+      }
+    }
+    if (nativeTrait.labels) {
+      const labels = [];
+      nativeTrait.labels.forEach(l => labels.push(l.name));
+      if (labels.length) {
+        rawWearableBonus[nativeTrait.type] = labels.join(",");
       }
     }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td>` +
-     (skipRaw ? '' : `<td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td></tr>`));
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td></tr>`);
 }
   
-async function getAll(ids, skipRaw) {
+async function getAll(ids) {
   for (let i = 0; i < ids.length; i++) {
-    await getRawTraits(ids[i], skipRaw);
+    await getRawTraits(ids[i]);
   }
 }
 
@@ -107,8 +94,7 @@ $(function() {
        (qd[k] = qd[k] || []).push(v) // null-coalescing / short-circuit
     })
     var ottoIds = qd.id[0].split(",");
-    var skipRaw = (qd.skipRaw && qd.skipRaw[0]);
-    getAll(ottoIds, skipRaw);
+    getAll(ottoIds);
   });
 
 </script>
