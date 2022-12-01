@@ -16,7 +16,7 @@ const ottopiaItemAbi = [{"anonymous":false,"inputs":[{"indexed":false,"internalT
 
 const ottopiaItem = new web3.eth.Contract(ottopiaItemAbi, "0xbd29ee9a2ce0c794eaf09bedca9387f4566377d5");
 
-async function getRawTraits(id) {
+async function getRawTraits(id, adventure) {
   //const rawTraits = await ottopia.methods.rawTraitsOf(id).call();
 
   let rawWearableScore = 0;
@@ -72,12 +72,40 @@ async function getRawTraits(id) {
       }
     }
   }
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td></tr>`);
+
+  // adventure check
+  const items = {"status": "none", "mission": [], "wearable": [], "collectible": [], "other": []};
+  if (adventure) {
+    const latestAdventurePass = ottoMetadata.latest_adventure_pass;
+    if (latestAdventurePass) {
+      const lastFinishedTx = latestAdventurePass.finished_tx;
+      if (lastFinishedTx) {
+
+        const lastAdventure = await (await fetch("https://api.otterclam.finance/adventure/results/" + lastFinishedTx, { "headers": {}, "body": null, "method": "GET"})).json();
+        lastAdventure.rewards.items.forEach(i => {
+          if (i.details.type === 'Mission Item') {
+            items.mission.push(i.name);
+          } else if (i.details.type === 'Collectible') {
+            items.collectible.push(i.name);
+          } else if (i.details.wearable) {
+            items.wearable.push(i.name);
+          } else {
+            items.other.push(i.name);
+          }
+        });
+        items.status = lastAdventure.success ? "success" : "fail";
+      } else {
+        items.status = "unfinished";
+      }
+    }
+  }
+
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td>` + (adventure ? `<td>${JSON.stringify(items)}</td></tr>` : ''));
 }
   
-async function getAll(ids) {
+async function getAll(ids, adventure) {
   for (let i = 0; i < ids.length; i++) {
-    await getRawTraits(ids[i]);
+    await getRawTraits(ids[i], adventure);
   }
 }
 
@@ -93,14 +121,15 @@ $(function() {
        (qd[k] = qd[k] || []).push(v) // null-coalescing / short-circuit
     })
     var ottoIds = qd.id[0].split(",");
-    getAll(ottoIds);
+    var adventure = !!qd.adventure;
+    getAll(ottoIds, adventure);
   });
 
 </script>
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Level</td><td>EXP</td><td>AP</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Raw Genetic Score</td><td>Raw Genetic Score</td><td>Raw Wearable BRS</td><td>Label Map</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Level</td><td>EXP</td><td>AP</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Raw Genetic Score</td><td>Raw Genetic Score</td><td>Raw Wearable BRS</td><td>Label Map</td><td>Adventure Items</td></tr>
   </tbody></table>
 </body>
 </html>
