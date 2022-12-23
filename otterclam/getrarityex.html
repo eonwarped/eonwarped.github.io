@@ -79,8 +79,8 @@ async function getRawTraits(id, adventure) {
     const latestAdventurePass = ottoMetadata.latest_adventure_pass;
     if (latestAdventurePass) {
       const lastFinishedTx = latestAdventurePass.finished_tx;
+      items.location_id = latestAdventurePass.location_id;
       if (lastFinishedTx) {
-
         const lastAdventure = await (await fetch("https://api.otterclam.finance/adventure/results/" + lastFinishedTx, { "headers": {}, "body": null, "method": "GET"})).json();
         lastAdventure.rewards.items.forEach(i => {
           if (i.details.type === 'Mission Item') {
