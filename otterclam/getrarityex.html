@@ -42,6 +42,7 @@ async function getRawTraits(id, adventure) {
   const level = ottoMetadata.otto_traits.find(x => x.trait_type === 'Level').value;
   const exp = ottoMetadata.otto_traits.find(x => x.trait_type === 'EXP').value;
   const ap = ottoMetadata.otto_traits.find(x => x.trait_type === 'AP').value;
+  const attributePoints = ottoMetadata.attributes.find(x => x.trait_type === 'Attribute Points').value;
 
   const attributes = {};
   ottoMetadata.otto_attrs.forEach(attr => {
@@ -100,7 +101,7 @@ async function getRawTraits(id, adventure) {
     }
   }
 
-  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td>` + (adventure ? `<td>${JSON.stringify(items)}</td></tr>` : ''));
+  $('#data-table tr:last').after(`<tr><td>${id}</td><td>${gender}</td><td>${birthday}</td><td>${constellation}</td><td>${constellationBoostValue}</td><td>${level}</td><td>${exp}</td><td>${ap}</td><td>${rawAttributes.STR}</td><td>${rawAttributes.DEF}</td><td>${rawAttributes.DEX}</td><td>${rawAttributes.INT}</td><td>${rawAttributes.LUK}</td><td>${rawAttributes.CON}</td><td>${rawAttributes.CUTE}</td><td>${attributePoints}</td><td>${rawGeneticScore}</td><td>${rawGeneticBrs}</td><td>${rawWearableScore}</td><td>${JSON.stringify(rawWearableBonus)}</td>` + (adventure ? `<td>${JSON.stringify(items)}</td></tr>` : ''));
 }
   
 async function getAll(ids, adventure) {
@@ -129,7 +130,7 @@ $(function() {
 </head>
 <body>
 <table class="table table-striped" id="data-table">
-    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Level</td><td>EXP</td><td>AP</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Raw Genetic Score</td><td>Raw Genetic Score</td><td>Raw Wearable BRS</td><td>Label Map</td><td>Adventure Items</td></tr>
+    <tbody><tr><td>Otto ID</td><td>Gender</td><td>Birthday</td><td>Constellation</td><td>Constellation Boost</td><td>Level</td><td>EXP</td><td>AP</td><td>STR</td><td>DEF</td><td>DEX</td><td>INT</td><td>LUK</td><td>CON</td><td>CUTE</td><td>Available Attribute Points</td><td>Raw Genetic Score</td><td>Raw Genetic Score</td><td>Raw Wearable BRS</td><td>Label Map</td><td>Adventure Items</td></tr>
   </tbody></table>
 </body>
 </html>
